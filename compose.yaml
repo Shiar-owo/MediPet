@@ -1,9 +1,31 @@
 services:
   postgres:
     image: 'postgres:latest'
+    container_name: medipet-postgres
     environment:
       - 'POSTGRES_DB=mydatabase'
       - 'POSTGRES_PASSWORD=secret'
       - 'POSTGRES_USER=myuser'
     ports:
-      - '5432'
+      - '5432:5432'
+    volumes:
+      - medipet-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U myuser -d mydatabase']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: medipet-app
+    ports:
+      - '8080:8080'
+    environment:
+      - 'SPRING_PROFILES_ACTIVE=dev'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  medipet-pgdata:

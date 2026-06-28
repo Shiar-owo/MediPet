@@ -21,6 +21,8 @@ services:
     container_name: medipet-app
     ports:
       - '8080:8080'
+    env_file:
+      - .env
     environment:
       - 'SPRING_PROFILES_ACTIVE=dev'
       - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mydatabase'

@@ -53,14 +53,51 @@ The application is split into **independent modules** inside one deployable arti
 
 Modules interact via **inbound port interfaces** (application services), keeping domain logic decoupled from infrastructure.
 
+### API Response Standard
+
+All endpoints return a unified `ApiResponse<T>` wrapper:
+
+```json
+// Success
+{ "success": true, "data": { ... } }
+
+// Success (no content)
+{ "success": true }
+
+// Paginated
+{ "success": true, "data": { "content": [...], "page": 0, "size": 10, "totalElements": 100, "totalPages": 10 } }
+
+// Error
+{ "success": false, "error": { "status": 404, "code": "NOT_FOUND", "message": "...", "path": "/api/...", "timestamp": "..." } }
+```
+
+**Usage in controllers:**
+```java
+return ResponseEntity.ok(ApiResponse.ok(entity));           // single entity
+return ResponseEntity.ok(ApiResponse.ok(pageResponse));     // paginated
+return ResponseEntity.ok(ApiResponse.ok());                 // no content
+```
+
 ### Base Package Structure
 
 ```
 com.medipet.medipet/
-├── shared/                          # Cross-cutting: exception handling, pagination, audit
-│   ├── exception/
+├── shared/                          # Cross-cutting: response wrapper, exceptions, pagination, audit
+│   ├── domain/
+│   │   └── Auditable.java           # @MappedSuperclass — audit fields
 │   ├── dto/
+│   │   ├── ApiResponse.java         # Unified API response wrapper
+│   │   └── PageResponse.java        # Paginated response body
+│   ├── exception/
+│   │   ├── BusinessException.java   # Base exception
+│   │   ├── NotFoundException.java    # 404
+│   │   ├── BadRequestException.java  # 400
+│   │   ├── ConflictException.java    # 409
+│   │   ├── UnauthorizedException.java # 401
+│   │   └── GlobalExceptionHandler.java # @RestControllerAdvice
 │   └── config/
+│       ├── JpaAuditingConfig.java    # @EnableJpaAuditing
+│       └── AuditorAwareImpl.java     # Resolves current user
 ├── module/
 │   ├── user/
 │   │   ├── domain/
@@ -83,15 +120,18 @@ com.medipet.medipet/
 
 ---
 
-## Phase 1 — Foundation
+## Phase 1 — Foundation ✅
 
-1. Configure `application.yaml` (datasource, JPA, JWT, actuator, server port)
-2. Create base package structure with shared cross-cutting concerns:
-   - Global exception handler (`@ControllerAdvice`) with structured error responses
-   - Pagination support via `Pageable` on all list endpoints
-   - Audit logging support (who did what, when)
-3. Define base domain interfaces (outbound port for persistence)
-4. Set up module package scaffolding for all 8 modules
+1. ✅ Configure `application.yaml` with profiles (dev/prod)
+2. ✅ Create shared cross-cutting concerns:
+   - ✅ `ApiResponse` unified response wrapper (replaces ErrorResponse)
+   - ✅ `PageResponse` for paginated results
+   - ✅ Global exception handler with structured error responses
+   - ✅ Custom exceptions: `NotFoundException`, `BadRequestException`, `ConflictException`, `UnauthorizedException`
+   - ✅ JPA Auditing with `Auditable` base entity and `AuditorAwareImpl`
+3. ✅ `compose.yaml` — PostgreSQL + app service with health check
+4. ✅ `.dockerignore` for efficient Docker builds
+5. ✅ `Dockerfile` multi-stage build
 
 ## Phase 2 — Auth & Users (RF01–RF05)
 
@@ -157,4 +197,4 @@ com.medipet.medipet/
 1. Backend first or backend + frontend together?
 2. SMTP provider for email features (Gmail, SendGrid, etc.)?
 3. `render.yaml` (IaC) or manual Render dashboard setup?
-4. Flyway/Liquibase migrations or JPA auto-DDL for now?
+4. ~~Flyway/Liquibase migrations or JPA auto-DDL for now?~~ → Using `validate`, need migrations when entities are added

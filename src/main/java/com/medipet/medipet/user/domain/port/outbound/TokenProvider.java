@@ -9,4 +9,6 @@ public interface TokenProvider {
     String extractEmail(String token);
 
     boolean validateToken(String token);
+
+    String extractRole(String token);
 }

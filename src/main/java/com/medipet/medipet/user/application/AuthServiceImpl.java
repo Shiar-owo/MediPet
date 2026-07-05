@@ -1,12 +1,10 @@
 package com.medipet.medipet.user.application;
 
-import com.medipet.medipet.shared.exception.BadRequestException;
 import com.medipet.medipet.shared.exception.NotFoundException;
 import com.medipet.medipet.shared.exception.UnauthorizedException;
 import com.medipet.medipet.user.domain.model.RefreshToken;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.port.inbound.AuthService;
-import com.medipet.medipet.user.domain.port.outbound.PasswordEncoder;
 import com.medipet.medipet.user.domain.port.outbound.RefreshTokenRepository;
 import com.medipet.medipet.user.domain.port.outbound.TokenProvider;
 import com.medipet.medipet.user.domain.port.outbound.UserRepository;
@@ -21,35 +19,24 @@ class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
     private final long refreshExpirationMs;
 
     AuthServiceImpl(UserRepository userRepository,
                     RefreshTokenRepository refreshTokenRepository,
-                    PasswordEncoder passwordEncoder,
                     TokenProvider tokenProvider,
                     @Value("${jwt.refresh-expiration}") long refreshExpirationMs) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
-        this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.refreshExpirationMs = refreshExpirationMs;
     }
 
     @Override
     @Transactional
-    public LoginResult login(String email, String password) {
+    public LoginResult issueTokens(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("Invalid email or password"));
-
-        if (!user.isActive()) {
-            throw new UnauthorizedException("Account is deactivated");
-        }
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new NotFoundException("Invalid email or password");
-        }
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);

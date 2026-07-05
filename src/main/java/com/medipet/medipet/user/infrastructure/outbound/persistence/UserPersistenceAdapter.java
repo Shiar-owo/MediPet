@@ -1,8 +1,8 @@
-package com.medipet.medipet.user.adapter.outbound.persistence;
+package com.medipet.medipet.user.infrastructure.outbound.persistence;
 
-import com.medipet.medipet.user.adapter.outbound.persistence.entity.UserEntity;
-import com.medipet.medipet.user.adapter.outbound.persistence.mapper.UserEntityMapper;
-import com.medipet.medipet.user.adapter.outbound.persistence.repository.UserJpaRepository;
+import com.medipet.medipet.user.infrastructure.outbound.persistence.entity.UserEntity;
+import com.medipet.medipet.user.infrastructure.outbound.persistence.mapper.UserEntityMapper;
+import com.medipet.medipet.user.infrastructure.outbound.persistence.repository.UserJpaRepository;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.port.outbound.UserRepository;
 import com.medipet.medipet.user.domain.valueobject.UserId;

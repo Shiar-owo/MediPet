@@ -1,4 +1,4 @@
-package com.medipet.medipet.user.adapter.inbound.security;
+package com.medipet.medipet.user.infrastructure.inbound.security;
 
 import com.medipet.medipet.user.domain.port.outbound.TokenProvider;
 import jakarta.servlet.FilterChain;

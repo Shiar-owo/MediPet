@@ -1,4 +1,4 @@
-package com.medipet.medipet.user.adapter.outbound.persistence.entity;
+package com.medipet.medipet.user.infrastructure.outbound.persistence.entity;
 
 import com.medipet.medipet.shared.domain.Auditable;
 import jakarta.persistence.Column;

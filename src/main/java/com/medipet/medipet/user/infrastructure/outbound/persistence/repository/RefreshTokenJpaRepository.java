@@ -1,6 +1,6 @@
-package com.medipet.medipet.user.adapter.outbound.persistence.repository;
+package com.medipet.medipet.user.infrastructure.outbound.persistence.repository;
 
-import com.medipet.medipet.user.adapter.outbound.persistence.entity.RefreshTokenEntity;
+import com.medipet.medipet.user.infrastructure.outbound.persistence.entity.RefreshTokenEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,6 +1,6 @@
-package com.medipet.medipet.user.adapter.outbound.persistence.repository;
+package com.medipet.medipet.user.infrastructure.outbound.persistence.repository;
 
-import com.medipet.medipet.user.adapter.outbound.persistence.entity.UserEntity;
+import com.medipet.medipet.user.infrastructure.outbound.persistence.entity.UserEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

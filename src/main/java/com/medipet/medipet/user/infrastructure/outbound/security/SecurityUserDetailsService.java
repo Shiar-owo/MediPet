@@ -1,13 +1,11 @@
-package com.medipet.medipet.user.adapter.outbound.security;
+package com.medipet.medipet.user.infrastructure.outbound.security;
 
-import com.medipet.medipet.user.adapter.outbound.persistence.repository.UserJpaRepository;
+import com.medipet.medipet.user.infrastructure.outbound.persistence.repository.UserJpaRepository;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
-
-import java.util.Collections;
 
 @Component
 public class SecurityUserDetailsService implements UserDetailsService {

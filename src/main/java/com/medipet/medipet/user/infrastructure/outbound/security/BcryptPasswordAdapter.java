@@ -1,4 +1,4 @@
-package com.medipet.medipet.user.adapter.outbound.security;
+package com.medipet.medipet.user.infrastructure.outbound.security;
 
 import com.medipet.medipet.user.domain.port.outbound.PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

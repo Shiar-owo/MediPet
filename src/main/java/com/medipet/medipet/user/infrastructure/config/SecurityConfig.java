@@ -1,7 +1,7 @@
-package com.medipet.medipet.user.config;
+package com.medipet.medipet.user.infrastructure.config;
 
-import com.medipet.medipet.user.adapter.inbound.security.JwtAuthenticationFilter;
-import com.medipet.medipet.user.adapter.outbound.security.SecurityUserDetailsService;
+import com.medipet.medipet.user.infrastructure.inbound.security.JwtAuthenticationFilter;
+import com.medipet.medipet.user.infrastructure.outbound.security.SecurityUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

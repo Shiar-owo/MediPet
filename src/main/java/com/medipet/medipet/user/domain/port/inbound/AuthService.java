@@ -1,8 +1,8 @@
 package com.medipet.medipet.user.domain.port.inbound;
 
-public interface    AuthService {
+public interface AuthService {
 
-    LoginResult login(String email, String password);
+    LoginResult issueTokens(String email);
 
     LoginResult refreshToken(String refreshToken);
 

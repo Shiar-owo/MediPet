@@ -1,4 +1,6 @@
-package com.medipet.medipet.user.adapter.outbound.persistence;
+package com.medipet.medipet.user.adapter.outbound.persistence.repository;
+
+import com.medipet.medipet.user.adapter.outbound.persistence.entity.RefreshTokenEntity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,4 +12,6 @@ public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenEnt
     Optional<RefreshTokenEntity> findByToken(String token);
 
     void deleteByToken(String token);
+
+    void deleteByUserEmail(String userEmail);
 }

@@ -1,6 +1,6 @@
 package com.medipet.medipet.user.adapter.outbound.persistence.mapper;
 
-import com.medipet.medipet.user.adapter.outbound.persistence.UserEntity;
+import com.medipet.medipet.user.adapter.outbound.persistence.entity.UserEntity;
 import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.valueobject.UserId;

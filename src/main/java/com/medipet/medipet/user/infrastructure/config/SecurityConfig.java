@@ -14,6 +14,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static org.springframework.http.HttpMethod.POST;
+
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
@@ -45,7 +47,10 @@ class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(POST, "/api/auth/login").permitAll()
+                .requestMatchers(POST, "/api/auth/refresh").permitAll()
+                .requestMatchers(POST, "/api/auth/logout").permitAll()
+                .requestMatchers(POST, "/api/auth/register").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authProvider)

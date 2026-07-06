@@ -20,7 +20,7 @@ class UpdateUserUseCaseImpl implements UpdateUserUseCase {
 
     @Override
     @Transactional
-    public User execute(UserId id, String firstName, String lastName, String role, String phone, String address) {
+    public User execute(UserId id, String firstName, String lastName, String role, String phone, String address, String avatar) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User", id.getValue()));
 
@@ -29,6 +29,7 @@ class UpdateUserUseCaseImpl implements UpdateUserUseCase {
         if (role != null) user.setRole(Role.valueOf(role));
         if (phone != null) user.setPhone(phone);
         if (address != null) user.setAddress(address);
+        if (avatar != null) user.setAvatar(avatar);
 
         return userRepository.save(user);
     }

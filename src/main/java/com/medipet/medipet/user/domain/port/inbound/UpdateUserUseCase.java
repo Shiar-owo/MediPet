@@ -5,5 +5,5 @@ import com.medipet.medipet.user.domain.valueobject.UserId;
 
 public interface UpdateUserUseCase {
 
-    User execute(UserId id, String firstName, String lastName, String role, String phone, String address);
+    User execute(UserId id, String firstName, String lastName, String role, String phone, String address, String avatar);
 }

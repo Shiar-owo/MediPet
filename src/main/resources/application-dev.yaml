@@ -14,10 +14,6 @@ spring:
         format_sql: true
     open-in-view: false
 
-  docker:
-    compose:
-      enabled: true
-
 management:
   endpoints:
     web:
@@ -25,6 +21,6 @@ management:
         include: health,info,env,beans
 
 jwt:
-  secret: super0secret0password
+  secret: super0secret0password-for-medipet-jwt
   access-expiration: 900000
   refresh-expiration: 604800000

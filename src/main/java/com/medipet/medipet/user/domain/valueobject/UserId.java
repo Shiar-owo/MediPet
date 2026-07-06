@@ -22,6 +22,10 @@ public class UserId {
         return new UserId(value);
     }
 
+    public static UserId from(String value) {
+        return new UserId(UUID.fromString(value));
+    }
+
     public UUID getValue() {
         return value;
     }

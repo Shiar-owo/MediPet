@@ -14,7 +14,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.PATCH;
 import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
 
 @Configuration
 @EnableWebSecurity
@@ -51,6 +54,10 @@ class SecurityConfig {
                 .requestMatchers(POST, "/api/auth/refresh").permitAll()
                 .requestMatchers(POST, "/api/auth/logout").permitAll()
                 .requestMatchers(POST, "/api/auth/register").hasRole("ADMIN")
+                .requestMatchers(GET, "/api/users").hasRole("ADMIN")
+                .requestMatchers(GET, "/api/users/**").hasRole("ADMIN")
+                .requestMatchers(PUT, "/api/users/**").hasRole("ADMIN")
+                .requestMatchers(PATCH, "/api/users/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authProvider)

@@ -1,0 +1,17 @@
+Criterio,Descripción
+1. Configuración y entorno,"Proyecto creado con Vite, uso correcto de Node.js/Yarn, variables de entorno (.env) bien aplicadas, desarollo de MD file para documentar proyecto"
+2. Estructura del proyecto,"Separación clara por carpetas (components, pages, hooks, services, context, se considera la arquitectura empleada para el proyecto)"
+3. JSX y componentes,"Uso correcto de JSX, componentes funcionales bien definidos y reutilizables"
+4. Props y comunicación,Uso adecuado de props entre componentes
+5. Estado (useState),Manejo correcto de estados y actualización eficiente
+6. Efectos (useEffect),"Uso correcto (carga inicial, dependencias, limpieza)"
+7. Eventos y formularios,"Manejo de eventos (onClick, onChange) + formularios funcionales"
+8. Renderizado dinámico,Uso de condicionales y listas con keys correctamente
+9. Navegación (React Router),"Uso de rutas, navegación con Link/useNavigate, rutas dinámicas"
+10. Consumo de APIs,Uso de fetch/axios + manejo de loading y error
+"11. Estado global (Context API, zustand)",Implementación funcional de contexto
+12. Optimización y hooks avanzados,"Uso de useRef, useCallback o custom hooks"
+13. Autenticación y persistencia,Login simulado + uso de localStorage/token - (nice to have -> integration with FakeStore Auth API)
+14. Funcionalidad extra (opcional),"(Mapas, subida de archivos, etc.)"
+15. Deploy (VEREMOS),"Proyecto desplegado correctamente (Vercel, Netlify, etc...)"
+16. Responsive (depende del sitio web),"El proyecto debe visualizarse en Desktop , Laptop , Mobile ( Nice to have -> Tablet también)"

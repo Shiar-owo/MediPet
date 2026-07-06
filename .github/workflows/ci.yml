@@ -1,29 +1,10 @@
 name: CI
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_DB: medipet_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -37,13 +18,12 @@ jobs:
 
       - name: Run tests
         run: ./mvnw test -B
-        env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/medipet_test
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: postgres
 
       - name: Build JAR
         run: ./mvnw clean package -DskipTests -B
+
+      - name: Build Docker image
+        run: docker build -t medipet .
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4

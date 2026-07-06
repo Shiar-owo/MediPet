@@ -10,6 +10,8 @@ import com.medipet.medipet.user.domain.valueobject.UserId;
 import com.medipet.medipet.user.infrastructure.inbound.rest.dto.request.UpdateUserRequest;
 import com.medipet.medipet.user.infrastructure.inbound.rest.dto.response.UserResponse;
 import com.medipet.medipet.user.infrastructure.inbound.rest.mapper.UserMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "Users", description = "User management (ADMIN only)")
 class UserController {
 
     private final UserQueryService userQueryService;
@@ -35,6 +38,7 @@ class UserController {
     }
 
     @GetMapping
+    @Operation(summary = "List users", description = "Returns a paginated list of all users.")
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -50,12 +54,14 @@ class UserController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get user by ID", description = "Returns a single user by their UUID.")
     public ResponseEntity<ApiResponse<UserResponse>> getById(@PathVariable String id) {
         var user = userQueryService.findById(UserId.from(id));
         return ResponseEntity.ok(ApiResponse.ok(UserMapper.toResponse(user)));
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update user", description = "Updates user profile fields. Only provided fields are changed.")
     public ResponseEntity<ApiResponse<UserResponse>> update(
             @PathVariable String id,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -71,12 +77,14 @@ class UserController {
     }
 
     @PatchMapping("/{id}/deactivate")
+    @Operation(summary = "Deactivate user", description = "Deactivates a user account. Deactivated users cannot log in.")
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable String id) {
         deactivateUserUseCase.execute(UserId.from(id));
         return ResponseEntity.ok(ApiResponse.ok());
     }
 
     @PatchMapping("/{id}/activate")
+    @Operation(summary = "Activate user", description = "Reactivates a previously deactivated user account.")
     public ResponseEntity<ApiResponse<Void>> activate(@PathVariable String id) {
         activateUserUseCase.execute(UserId.from(id));
         return ResponseEntity.ok(ApiResponse.ok());

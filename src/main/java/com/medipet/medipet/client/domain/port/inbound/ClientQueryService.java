@@ -11,7 +11,5 @@ public interface ClientQueryService {
 
     Client findByDni(String dni);
 
-    PageResponse<Client> search(String query, Pageable pageable);
-
-    PageResponse<Client> findAll(Pageable pageable);
+    PageResponse<Client> findAll(String query, Pageable pageable);
 }

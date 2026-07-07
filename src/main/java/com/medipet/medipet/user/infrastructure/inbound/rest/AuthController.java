@@ -68,7 +68,7 @@ class AuthController {
                 result.accessToken(),
                 result.refreshToken(),
                 request.getEmail(),
-                null)));
+                result.role())));
     }
 
     @PostMapping("/refresh")

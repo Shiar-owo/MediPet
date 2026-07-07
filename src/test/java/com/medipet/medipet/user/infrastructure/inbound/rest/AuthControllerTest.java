@@ -52,7 +52,7 @@ class AuthControllerTest {
     @Test
     void shouldLoginSuccessfully() throws Exception {
         when(authService.issueTokens("user@example.com"))
-                .thenReturn(new AuthService.LoginResult("access-token", "refresh-token"));
+                .thenReturn(new AuthService.LoginResult("access-token", "refresh-token", "VETERINARIO"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -87,7 +87,7 @@ class AuthControllerTest {
     @Test
     void shouldRefreshTokenSuccessfully() throws Exception {
         when(authService.refreshToken("old-refresh-token"))
-                .thenReturn(new AuthService.LoginResult("new-access", "new-refresh"));
+                .thenReturn(new AuthService.LoginResult("new-access", "new-refresh", "ADMIN"));
 
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)

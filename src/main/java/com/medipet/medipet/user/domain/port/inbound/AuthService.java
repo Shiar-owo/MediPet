@@ -8,6 +8,6 @@ public interface AuthService {
 
     void logout(String refreshToken);
 
-    record LoginResult(String accessToken, String refreshToken) {
+    record LoginResult(String accessToken, String refreshToken, String role) {
     }
 }

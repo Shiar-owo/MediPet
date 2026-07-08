@@ -79,7 +79,8 @@ class AuthControllerTest {
                         .content("""
                                 {"email":"new@example.com","password":"password123","firstName":"Jane","lastName":"Doe","role":"VETERINARIO"}
                                 """))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("/api/users/")))
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.email").value("new@example.com"));
     }

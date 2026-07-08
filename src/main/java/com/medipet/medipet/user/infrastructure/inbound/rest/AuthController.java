@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import java.net.URI;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,7 +54,9 @@ class AuthController {
                 request.getLastName(),
                 role);
 
-        return ResponseEntity.ok(ApiResponse.ok(UserMapper.toResponse(user)));
+        var response = UserMapper.toResponse(user);
+        URI location = URI.create("/api/users/" + response.getId());
+        return ResponseEntity.created(location).body(ApiResponse.ok(response));
     }
 
     @PostMapping("/login")

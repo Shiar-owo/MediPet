@@ -10,7 +10,7 @@ Veterinary Clinic Management System — a modular monolith built with **hexagona
 |--------|---------|-------|--------|
 | Shared infrastructure | Complete | — | ✅ |
 | User/Auth | Complete | 56 passing | ✅ |
-| Client | Pending | — | 🔲 |
+| Client | Complete | 31 passing | ✅ |
 | Pet | Pending | — | 🔲 |
 | Appointment | Pending | — | 🔲 |
 | Clinical | Pending | — | 🔲 |
@@ -51,12 +51,12 @@ All modules live under `com.medipet.medipet`:
 
 | Module | Responsibility |
 |--------|---------------|
+| `shared` | Cross-cutting: ApiResponse, exceptions, audit, CORS |
 | `user` | Auth, users, roles, JWT |
-| `client` | Pet owners (planned) |
+| `client` | Pet owners — CRUD, search by name/DNI |
 | `pet` | Pets (planned) |
 | `appointment` | Scheduling (planned) |
 | `clinical` | Consultations (planned) |
-| `shared` | Cross-cutting: ApiResponse, exceptions, audit, CORS |
 
 ### API Response Standard
 
@@ -150,6 +150,16 @@ Change the password on first login. The `POST /api/auth/register` endpoint is pr
 | PATCH | `/api/users/{id}/activate` | Activate user |
 | PATCH | `/api/users/{id}/deactivate` | Deactivate user |
 
+### Clients (`/api/clients`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/clients` | Create client (DNI unique, returns 201) |
+| PUT | `/api/clients/{id}` | Update client (partial) |
+| GET | `/api/clients/{id}` | Get client by ID |
+| GET | `/api/clients/dni/{dni}` | Get client by DNI |
+| GET | `/api/clients?q=&page=&size=` | List/search clients by name (paginated) |
+
 ---
 
 ## Project Structure
@@ -161,16 +171,16 @@ medipet/
 ├── src/main/java/
 │   └── com/medipet/medipet/
 │       ├── shared/          # ApiResponse, exceptions, audit, CORS
-│       ├── user/            # Auth & user management (complete)
-│       ├── client/          # (planned)
+│       ├── user/            # Auth & user management
+│       ├── client/          # Client CRUD & search
 │       ├── pet/             # (planned)
 │       ├── appointment/     # (planned)
 │       └── clinical/        # (planned)
 ├── src/main/resources/
 │   ├── application.yaml
 │   ├── application-dev.yaml
-│   └── db/migration/        # V1–V3 (users, refresh_tokens, admin seed)
-├── src/test/                # 56 tests (unit + integration)
+│   └── db/migration/        # V1–V4 (users, refresh_tokens, admin seed, clients)
+├── src/test/                # 87 tests (unit + integration + context)
 ├── compose.yaml
 ├── Dockerfile
 └── pom.xml
@@ -206,8 +216,13 @@ medipet/
 | UserControllerTest | WebMvc | 6 |
 | UserPersistenceAdapterTest | Integration | 8 |
 | RefreshTokenPersistenceAdapterTest | Integration | 6 |
+| CreateClientUseCaseImplTest | Unit | 2 |
+| UpdateClientUseCaseImplTest | Unit | 3 |
+| ClientQueryServiceImplTest | Unit | 7 |
+| ClientPersistenceAdapterTest | Integration | 7 |
+| ClientControllerTest | WebMvc | 12 |
 | MedipetApplicationTests | Context | 1 |
-| **Total** | | **56** |
+| **Total** | | **87** |
 
 ---
 

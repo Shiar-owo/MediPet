@@ -6,7 +6,7 @@ public class NotFoundException extends BusinessException {
         super("NOT_FOUND", message);
     }
 
-    public NotFoundException(String entity, Long id) {
-        super("NOT_FOUND", "%s with id %d not found".formatted(entity, id));
+    public NotFoundException(String entity, Object id) {
+        super("NOT_FOUND", "%s with id %s not found".formatted(entity, id));
     }
 }

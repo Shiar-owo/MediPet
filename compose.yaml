@@ -21,9 +21,17 @@ services:
     container_name: medipet-app
     ports:
       - '8080:8080'
+    env_file:
+      - .env
     environment:
       - 'SPRING_PROFILES_ACTIVE=dev'
       - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mydatabase'
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:8080/actuator/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy

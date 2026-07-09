@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-MediPet is a Veterinary Clinic Management System — a **modular monolith** built with **hexagonal architecture** (ports & adapters), using Spring Boot 4.0.7, PostgreSQL, and a React frontend. It covers user/role management, clients, pets, appointments, medical records, vaccines, prescriptions, inventory, billing, reports, and dashboards — 47 functional requirements and 10 non-functional requirements.
+MediPet is a Veterinary Clinic Management System — a **modular monolith** built with **hexagonal architecture** (ports & adapters), using Spring Boot 4.0.7, PostgreSQL, and a React frontend. It covers user/role management, clients, pets, appointments, medical records, vaccines, prescriptions, inventory, billing, reports, and dashboards — 46 functional requirements and 10 non-functional requirements.
 
 **Current state**: Blank scaffold — Spring Boot entry point only, no business logic.
 
@@ -98,25 +98,24 @@ com.medipet.medipet/
 │   └── config/
 │       ├── JpaAuditingConfig.java    # @EnableJpaAuditing
 │       └── AuditorAwareImpl.java     # Resolves current user
-├── module/
-│   ├── user/
-│   │   ├── domain/
-│   │   ├── application/
-│   │   ├── adapter/
-│   │   └── config/
-│   ├── client/
-│   │   ├── domain/
-│   │   ├── application/
-│   │   ├── adapter/
-│   │   └── config/
-│   ├── pet/
-│   ├── appointment/
-│   ├── clinical/
-│   ├── inventory/
-│   ├── billing/
-│   └── report/
+├── user/                            # Auth & user management
+│   ├── domain/
+│   │   ├── model/
+│   │   └── port/
+│   ├── application/
+│   ├── adapter/
+│   └── config/
+├── client/                          # Clients (pet owners)
+├── pet/                             # Pets
+├── appointment/                     # Scheduling
+├── clinical/                        # Consultations, vaccines, prescriptions
+├── inventory/                       # Products, stock
+├── billing/                         # Invoices, payments
+├── report/                          # Dashboard, reports
 └── MedipetApplication.java
 ```
+
+**Note:** Modules live directly under `com.medipet.medipet`, not under a `module/` parent package.
 
 ---
 
@@ -133,13 +132,13 @@ com.medipet.medipet/
 4. ✅ `.dockerignore` for efficient Docker builds
 5. ✅ `Dockerfile` multi-stage build
 
-## Phase 2 — Auth & Users (RF01–RF05)
+## Phase 2 — Auth & Users (RF01–RF04)
 
 5. **user** module — domain model (User, Role), use cases, JPA adapter, REST adapter
 6. Security config — `SecurityFilterChain`, BCrypt password encoder, stateless sessions
-7. JWT — token generation, validation, refresh token (adapter in `user.adapter.outbound`)
+7. JWT — token generation, validation, database-persisted refresh token
 8. User CRUD with role assignment (Admin, Veterinario, Recepcionista)
-9. Password change and email recovery (outbound port + email adapter)
+9. Password change
 
 ## Phase 3 — Core Domain (RF06–RF21)
 

@@ -2,9 +2,22 @@
 
 ## Project Summary
 
-MediPet is a Veterinary Clinic Management System — a **modular monolith** built with **hexagonal architecture** (ports & adapters), using Spring Boot 4.0.7, PostgreSQL, and a React frontend. It covers user/role management, clients, pets, appointments, medical records, vaccines, prescriptions, inventory, billing, reports, and dashboards — 46 functional requirements and 10 non-functional requirements.
+MediPet is a Veterinary Clinic Management System — a **modular monolith** built with **hexagonal architecture** (ports & adapters), using Spring Boot 4.0.7, PostgreSQL, and a React frontend.
 
-**Current state**: Blank scaffold — Spring Boot entry point only, no business logic.
+---
+
+## Current Status
+
+| Module | Backend | Tests | Status |
+|--------|---------|-------|--------|
+| Shared infrastructure | Complete | — | ✅ |
+| User/Auth | Complete | 56 passing | ✅ |
+| Client | Complete | 31 passing | ✅ |
+| Pet | Complete | 38 passing | ✅ |
+| Appointment | Pending | — | 🔲 |
+| Clinical | Pending | — | 🔲 |
+| Frontend (React) | Not started | — | 🔲 |
+| Deploy | Not started | — | 🔲 |
 
 ---
 
@@ -17,183 +30,266 @@ Each module is structured internally as:
 ```
 module/
 ├── domain/
-│   ├── model/          # Domain entities / value objects (pure Java, no framework annotations)
+│   ├── model/          # Domain entities / value objects (pure Java)
 │   └── port/
-│       ├── inbound/    # Use case interfaces (driven by the application)
-│       └── outbound/   # Port interfaces for persistence, messaging, etc.
-├── application/        # Use case implementations (orchestrate domain objects)
-├── adapter/
-│   ├── inbound/        # Controllers, REST DTOs, request/response mappers
+│       ├── inbound/    # Use case interfaces
+│       └── outbound/   # Persistence & security ports
+├── application/        # Use case implementations
+├── infrastructure/
+│   ├── inbound/
+│   │   ├── rest/       # Controllers, DTOs, mappers
+│   │   └── security/   # JWT filter
 │   └── outbound/
-│       ├── persistence/ # JPA repositories, entities, mappers
-│       └── messaging/   # Email sender, event publishers, etc.
-└── config/             # Spring beans, module wiring
+│       ├── persistence/ # JPA entities, repos, adapters, mappers
+│       └── security/   # JWT provider, BCrypt
+└── config/             # SecurityConfig, module wiring
 ```
-
-**Key rules:**
-- Domain layer has **zero** framework dependencies (no Spring, no JPA annotations).
-- Outbound ports define what persistence/messaging the domain needs — adapters implement them.
-- Inbound ports define use cases — adapters (REST controllers) drive them.
-- Modules communicate through their **inbound ports** (never directly call other modules' repositories).
 
 ### Modular Monolith
 
-The application is split into **independent modules** inside one deployable artifact:
+All modules live under `com.medipet.medipet`:
 
-| Module | Domain |
-|---|---|
-| `user` | Users, roles, authentication |
-| `client` | Clients (pet owners) |
-| `pet` | Pets, medical history |
-| `appointment` | Appointments, scheduling, calendar |
-| `clinical` | Consultations, vaccines, prescriptions |
-| `inventory` | Products, stock, alerts |
-| `billing` | Invoices, payments |
-| `report` | Dashboard, reports, exports |
-
-Modules interact via **inbound port interfaces** (application services), keeping domain logic decoupled from infrastructure.
+| Module | Responsibility |
+|--------|---------------|
+| `shared` | Cross-cutting: ApiResponse, exceptions, audit, CORS |
+| `user` | Auth, users, roles, JWT |
+| `client` | Pet owners — CRUD, search by name/DNI |
+| `pet` | Pets — CRUD, search by name, microchip, owner |
+| `appointment` | Appointments — scheduling, calendar, overlap prevention |
+| `clinical` | Consultations, vaccines, prescriptions (MVP simplified) |
 
 ### API Response Standard
 
 All endpoints return a unified `ApiResponse<T>` wrapper:
 
 ```json
-// Success
 { "success": true, "data": { ... } }
-
-// Success (no content)
-{ "success": true }
-
-// Paginated
-{ "success": true, "data": { "content": [...], "page": 0, "size": 10, "totalElements": 100, "totalPages": 10 } }
-
-// Error
+{ "success": true, "data": { "content": [...], "page": 0, "size": 20, "totalElements": 100, "totalPages": 5 } }
 { "success": false, "error": { "status": 404, "code": "NOT_FOUND", "message": "...", "path": "/api/...", "timestamp": "..." } }
 ```
 
-**Usage in controllers:**
-```java
-return ResponseEntity.ok(ApiResponse.ok(entity));           // single entity
-return ResponseEntity.ok(ApiResponse.ok(pageResponse));     // paginated
-return ResponseEntity.ok(ApiResponse.ok());                 // no content
-```
+---
 
-### Base Package Structure
+## 5-Day MVP Plan
 
-```
-com.medipet.medipet/
-├── shared/                          # Cross-cutting: response wrapper, exceptions, pagination, audit
-│   ├── domain/
-│   │   └── Auditable.java           # @MappedSuperclass — audit fields
-│   ├── dto/
-│   │   ├── ApiResponse.java         # Unified API response wrapper
-│   │   └── PageResponse.java        # Paginated response body
-│   ├── exception/
-│   │   ├── BusinessException.java   # Base exception
-│   │   ├── NotFoundException.java    # 404
-│   │   ├── BadRequestException.java  # 400
-│   │   ├── ConflictException.java    # 409
-│   │   ├── UnauthorizedException.java # 401
-│   │   └── GlobalExceptionHandler.java # @RestControllerAdvice
-│   └── config/
-│       ├── JpaAuditingConfig.java    # @EnableJpaAuditing
-│       └── AuditorAwareImpl.java     # Resolves current user
-├── user/                            # Auth & user management
-│   ├── domain/
-│   │   ├── model/
-│   │   └── port/
-│   ├── application/
-│   ├── adapter/
-│   └── config/
-├── client/                          # Clients (pet owners)
-├── pet/                             # Pets
-├── appointment/                     # Scheduling
-├── clinical/                        # Consultations, vaccines, prescriptions
-├── inventory/                       # Products, stock
-├── billing/                         # Invoices, payments
-├── report/                          # Dashboard, reports
-└── MedipetApplication.java
-```
+### Day 1 — Appointment Backend + Frontend Foundation
 
-**Note:** Modules live directly under `com.medipet.medipet`, not under a `module/` parent package.
+**Backend: Appointment Module (full)**
+- Domain: `AppointmentId`, `AppointmentStatus` enum, `Appointment` model
+- Ports: `CreateAppointmentUseCase`, `UpdateAppointmentUseCase`, `CancelAppointmentUseCase`, `AppointmentQueryService`
+- Application: Implementations with overlap prevention (RF20)
+- Persistence: `V6__create_appointments_table.sql`, `AppointmentEntity`, `AppointmentJpaRepository`, `AppointmentEntityMapper`, `AppointmentPersistenceAdapter`
+- REST: `AppointmentController` with 8 endpoints (CRUD, cancel, query by client/pet/vet/date)
+- Tests: ~30 tests (unit + integration + controller)
+
+**Frontend: Foundation**
+- Vite + React setup
+- Project folder structure: `components/`, `pages/`, `hooks/`, `services/`, `context/`
+- `AuthContext` — login/logout, JWT storage in localStorage, auto-attach token to requests
+- Login page with form validation
+- Protected route wrapper
+- Axios/fetch service with base URL from `.env`
+
+### Day 2 — Frontend Core Pages
+
+**Client Pages**
+- Client list (paginated, search by name)
+- Create client form
+- Edit client form
+- Client detail → list of pets
+
+**Pet Pages**
+- Pet list (paginated, search by name)
+- Create pet form (with client selector)
+- Edit pet form
+- Pet detail
+
+**Shared Components**
+- `DataTable` (reusable table with pagination)
+- `FormInput` (reusable form field)
+- `LoadingSpinner`, `ErrorMessage`
+- `Modal` for confirmations
+
+### Day 3 — Appointment Frontend + Clinical Backend
+
+**Appointment Pages**
+- Appointment list (paginated, filter by date)
+- Create appointment form (client/pet/vet selectors, date/time picker)
+- Edit appointment form
+- Cancel appointment (with confirmation)
+- Status badges (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED)
+
+**Backend: Clinical Module (simplified)**
+- Domain: `Consultation` model (appointment link, symptoms, diagnosis, treatment, notes)
+- Ports: `CreateConsultationUseCase`, `ConsultationQueryService`
+- Persistence: `V7__create_consultations_table.sql`
+- REST: `POST /api/consultations`, `GET /api/consultations/appointment/{appointmentId}`
+- Tests: ~15 tests
+
+### Day 4 — Dashboard + Polish
+
+**Dashboard**
+- Backend: Dashboard stats endpoint (`GET /api/dashboard/stats`)
+  - Total clients, pets, appointments (this month), active appointments
+  - Upcoming appointments (next 7 days)
+- Frontend: Dashboard page with stat cards and upcoming appointments list
+
+**Responsive Design**
+- Tailwind CSS or CSS media queries
+- Mobile-friendly navigation
+- Responsive tables and forms
+- Breakpoints: mobile (<640px), tablet (640-1024px), desktop (>1024px)
+
+**Polish**
+- Error handling on all API calls
+- Loading states on all pages
+- Empty states ("No clients found", etc.)
+- Toast notifications for success/error actions
+
+### Day 5 — Deploy + Final Testing
+
+**Backend Deploy (Render)**
+- Verify `Dockerfile` builds correctly
+- Create Render Web Service
+- Create Render Managed PostgreSQL
+- Set environment variables (JWT secret, DB connection)
+- Verify API endpoints via Swagger/OpenAPI
+
+**Frontend Deploy (Vercel)**
+- Configure `VITE_API_URL` in `.env`
+- Build and deploy to Vercel
+- Verify all pages work end-to-end
+
+**Final Testing**
+- Run full test suite (target: 180+ tests)
+- Verify CORS works between Vercel frontend and Render backend
+- Test login flow end-to-end
+- Test CRUD operations for clients, pets, appointments
+- Fix any remaining bugs
 
 ---
 
-## Phase 1 — Foundation ✅
+## API Endpoints (Completed)
 
-1. ✅ Configure `application.yaml` with profiles (dev/prod)
-2. ✅ Create shared cross-cutting concerns:
-   - ✅ `ApiResponse` unified response wrapper (replaces ErrorResponse)
-   - ✅ `PageResponse` for paginated results
-   - ✅ Global exception handler with structured error responses
-   - ✅ Custom exceptions: `NotFoundException`, `BadRequestException`, `ConflictException`, `UnauthorizedException`
-   - ✅ JPA Auditing with `Auditable` base entity and `AuditorAwareImpl`
-3. ✅ `compose.yaml` — PostgreSQL + app service with health check
-4. ✅ `.dockerignore` for efficient Docker builds
-5. ✅ `Dockerfile` multi-stage build
+### Auth (`/api/auth`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | Login, returns tokens |
+| POST | `/api/auth/register` | Create user (ADMIN) |
+| POST | `/api/auth/refresh` | Refresh token |
+| POST | `/api/auth/logout` | Invalidate token |
 
-## Phase 2 — Auth & Users (RF01–RF04)
+### Users (`/api/users`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users` | List users |
+| GET | `/api/users/{id}` | Get user |
+| PUT | `/api/users/{id}` | Update user |
+| PATCH | `/api/users/{id}/activate` | Activate |
+| PATCH | `/api/users/{id}/deactivate` | Deactivate |
 
-5. **user** module — domain model (User, Role), use cases, JPA adapter, REST adapter
-6. Security config — `SecurityFilterChain`, BCrypt password encoder, stateless sessions
-7. JWT — token generation, validation, database-persisted refresh token
-8. User CRUD with role assignment (Admin, Veterinario, Recepcionista)
-9. Password change
+### Clients (`/api/clients`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/clients` | Create (201) |
+| PUT | `/api/clients/{id}` | Update |
+| GET | `/api/clients/{id}` | Get by ID |
+| GET | `/api/clients/dni/{dni}` | Get by DNI |
+| GET | `/api/clients` | List/search |
 
-## Phase 3 — Core Domain (RF06–RF21)
+### Pets (`/api/pets`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/pets` | Register (201) |
+| PUT | `/api/pets/{id}` | Update |
+| GET | `/api/pets/{id}` | Get by ID |
+| GET | `/api/pets/microchip/{microchipId}` | Get by microchip |
+| GET | `/api/pets/client/{clientId}` | List by owner |
+| GET | `/api/pets` | List/search |
 
-10. **client** module — CRUD, search by name/DNI
-11. **pet** module — CRUD, link to client, "fallecida" status
-12. **appointment** module — CRUD, status workflow, calendar view, overlap prevention
-13. Email reminder — 24h-before-appointment notification (outbound port + scheduler adapter)
+## API Endpoints (Planned — Day 1)
 
-## Phase 4 — Clinical Features (RF22–RF33)
+### Appointments (`/api/appointments`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/appointments` | Create (201, overlap check) |
+| PUT | `/api/appointments/{id}` | Update |
+| PATCH | `/api/appointments/{id}/cancel` | Cancel |
+| GET | `/api/appointments/{id}` | Get by ID |
+| GET | `/api/appointments/client/{clientId}` | List by client |
+| GET | `/api/pets/pet/{petId}` | List by pet |
+| GET | `/api/appointments/veterinarian/{vetId}` | List by vet |
+| GET | `/api/appointments?date=&page=&size=` | List by date range |
 
-14. **clinical** module:
-    - Medical records — created from completed appointments, file attachments (file storage port + adapter)
-    - Vaccines — registration, 7-day expiry alert, vaccination card
-    - Prescriptions — linked to consultation, medication details
+## API Endpoints (Planned — Day 3)
 
-## Phase 5 — Business (RF34–RF42)
+### Consultations (`/api/consultations`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/consultations` | Create from appointment |
+| GET | `/api/consultations/appointment/{appointmentId}` | Get by appointment |
 
-15. **inventory** module — product CRUD, stock auto-deduction, low-stock & expiry alerts
-16. **billing** module — invoice generation from consultations + products, payment states, PDF export (PDF port + adapter)
-
-## Phase 6 — Reports & Dashboard (RF43–RF47)
-
-17. **report** module — dashboard endpoints, report endpoints, PDF/Excel export
-18. Read-only use cases that aggregate data from other modules via their outbound ports
-
-## Phase 7 — Frontend (RNF02)
-
-19. React SPA — login, dashboard, all CRUD views, responsive design
-
-## Phase 8 — Deploy to Render
-
-### Backend (Render Web Service)
-
-20. `Dockerfile` (multi-stage: Maven build → JRE runtime) ✅ done
-21. Add `render.yaml` (Blueprint IaC) for the web service
-22. Use **Render Managed PostgreSQL** (not Docker Compose in prod)
-23. Environment variables: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, JWT secret, SMTP credentials
-24. Build command: `./mvnw clean package -DskipTests`
-25. Start command: `java -jar target/medipet-0.0.1-SNAPSHOT.jar`
-
-### Frontend (Render Static Site)
-
-26. Static React build served from Render Static Site
-27. API base URL as env var pointing to the backend service URL
-
-### Database (Render PostgreSQL)
-
-28. Create via Render dashboard or `render.yaml`
-29. Connection string wired as env var to the backend service
+### Dashboard (`/api/dashboard`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/dashboard/stats` | System-wide stats |
 
 ---
 
-## Open Questions
+## Flyway Migrations
 
-1. Backend first or backend + frontend together?
-2. SMTP provider for email features (Gmail, SendGrid, etc.)?
-3. `render.yaml` (IaC) or manual Render dashboard setup?
-4. ~~Flyway/Liquibase migrations or JPA auto-DDL for now?~~ → Using `validate`, need migrations when entities are added
+| Version | File | Description |
+|---------|------|-------------|
+| V1 | `V1__create_users_table.sql` | Users table |
+| V2 | `V2__create_refresh_tokens_table.sql` | Refresh tokens |
+| V3 | `V3__seed_admin.sql` | Default admin user |
+| V4 | `V4__create_clients_table.sql` | Clients table |
+| V5 | `V5__create_pets_table.sql` | Pets table |
+| V6 | `V6__create_appointments_table.sql` | Appointments (Day 1) |
+| V7 | `V7__create_consultations_table.sql` | Consultations (Day 3) |
+
+---
+
+## Deployment
+
+### Backend (Render)
+- `Dockerfile` — multi-stage build (Maven → JRE)
+- Render Web Service + Managed PostgreSQL
+- Env vars: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, JWT secret
+
+### Frontend (Vercel)
+- Vite + React SPA
+- `VITE_API_URL` env var pointing to Render backend
+- Auto-deploy from GitHub
+
+---
+
+## Test Coverage (Current: 126 tests)
+
+| Test Class | Type | Tests |
+|------------|------|-------|
+| CreateUserUseCaseImplTest | Unit | 2 |
+| ChangePasswordUseCaseImplTest | Unit | 3 |
+| AuthServiceImplTest | Unit | 6 |
+| JwtTokenProviderTest | Unit | 7 |
+| SecurityUserDetailsServiceTest | Unit | 3 |
+| BcryptPasswordAdapterTest | Unit | 4 |
+| JwtAuthenticationFilterTest | Unit | 5 |
+| AuthControllerTest | WebMvc | 5 |
+| UserControllerTest | WebMvc | 6 |
+| UserPersistenceAdapterTest | Integration | 8 |
+| RefreshTokenPersistenceAdapterTest | Integration | 6 |
+| CreateClientUseCaseImplTest | Unit | 2 |
+| UpdateClientUseCaseImplTest | Unit | 3 |
+| ClientQueryServiceImplTest | Unit | 7 |
+| ClientPersistenceAdapterTest | Integration | 7 |
+| ClientControllerTest | WebMvc | 12 |
+| CreatePetUseCaseImplTest | Unit | 3 |
+| UpdatePetUseCaseImplTest | Unit | 5 |
+| PetQueryServiceImplTest | Unit | 8 |
+| PetPersistenceAdapterTest | Integration | 9 |
+| PetControllerTest | WebMvc | 14 |
+| MedipetApplicationTests | Context | 1 |
+| **Total** | | **126** |
+
+**Target after Day 5:** 180+ tests

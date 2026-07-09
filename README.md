@@ -11,7 +11,7 @@ Veterinary Clinic Management System — a modular monolith built with **hexagona
 | Shared infrastructure | Complete | — | ✅ |
 | User/Auth | Complete | 56 passing | ✅ |
 | Client | Complete | 31 passing | ✅ |
-| Pet | Pending | — | 🔲 |
+| Pet | Complete | 38 passing | ✅ |
 | Appointment | Pending | — | 🔲 |
 | Clinical | Pending | — | 🔲 |
 | File upload | Pending | — | 🔲 |
@@ -54,7 +54,7 @@ All modules live under `com.medipet.medipet`:
 | `shared` | Cross-cutting: ApiResponse, exceptions, audit, CORS |
 | `user` | Auth, users, roles, JWT |
 | `client` | Pet owners — CRUD, search by name/DNI |
-| `pet` | Pets (planned) |
+| `pet` | Pets — CRUD, search by name, microchip, owner |
 | `appointment` | Scheduling (planned) |
 | `clinical` | Consultations (planned) |
 
@@ -160,6 +160,17 @@ Change the password on first login. The `POST /api/auth/register` endpoint is pr
 | GET | `/api/clients/dni/{dni}` | Get client by DNI |
 | GET | `/api/clients?q=&page=&size=` | List/search clients by name (paginated) |
 
+### Pets (`/api/pets`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/pets` | Register pet (microchip unique, returns 201) |
+| PUT | `/api/pets/{id}` | Update pet (partial) |
+| GET | `/api/pets/{id}` | Get pet by ID |
+| GET | `/api/pets/microchip/{microchipId}` | Get pet by microchip |
+| GET | `/api/pets/client/{clientId}?page=&size=` | List pets by owner (paginated) |
+| GET | `/api/pets?q=&page=&size=` | List/search pets by name (paginated) |
+
 ---
 
 ## Project Structure
@@ -173,14 +184,14 @@ medipet/
 │       ├── shared/          # ApiResponse, exceptions, audit, CORS
 │       ├── user/            # Auth & user management
 │       ├── client/          # Client CRUD & search
-│       ├── pet/             # (planned)
+│       ├── pet/             # Pet CRUD & search
 │       ├── appointment/     # (planned)
 │       └── clinical/        # (planned)
 ├── src/main/resources/
 │   ├── application.yaml
 │   ├── application-dev.yaml
-│   └── db/migration/        # V1–V4 (users, refresh_tokens, admin seed, clients)
-├── src/test/                # 87 tests (unit + integration + context)
+│   └── db/migration/        # V1–V5 (users, refresh_tokens, admin seed, clients, pets)
+├── src/test/                # 126 tests (unit + integration + context)
 ├── compose.yaml
 ├── Dockerfile
 └── pom.xml
@@ -221,8 +232,13 @@ medipet/
 | ClientQueryServiceImplTest | Unit | 7 |
 | ClientPersistenceAdapterTest | Integration | 7 |
 | ClientControllerTest | WebMvc | 12 |
+| CreatePetUseCaseImplTest | Unit | 3 |
+| UpdatePetUseCaseImplTest | Unit | 5 |
+| PetQueryServiceImplTest | Unit | 8 |
+| PetPersistenceAdapterTest | Integration | 9 |
+| PetControllerTest | WebMvc | 14 |
 | MedipetApplicationTests | Context | 1 |
-| **Total** | | **87** |
+| **Total** | | **126** |
 
 ---
 

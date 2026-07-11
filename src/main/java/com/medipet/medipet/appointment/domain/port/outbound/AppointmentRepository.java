@@ -20,6 +20,8 @@ public interface AppointmentRepository {
     Page<Appointment> findByClientId(ClientId clientId, Pageable pageable);
     Page<Appointment> findByPetId(PetId petId, Pageable pageable);
     Page<Appointment> findByVeterinarianId(UserId veterinarianId, Pageable pageable);
+    Page<Appointment> findByVeterinarianIdAndClientId(UserId veterinarianId, ClientId clientId, Pageable pageable);
+    Page<Appointment> findByVeterinarianIdAndPetId(UserId veterinarianId, PetId petId, Pageable pageable);
     Page<Appointment> findByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable);
     Page<Appointment> findAll(Pageable pageable);
 }

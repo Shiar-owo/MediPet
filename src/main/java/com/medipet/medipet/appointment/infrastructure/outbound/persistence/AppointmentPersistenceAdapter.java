@@ -67,6 +67,18 @@ class AppointmentPersistenceAdapter implements AppointmentRepository {
     }
 
     @Override
+    public Page<Appointment> findByVeterinarianIdAndClientId(UserId veterinarianId, ClientId clientId, Pageable pageable) {
+        return jpaRepository.findByVeterinarianIdAndClientId(veterinarianId.getValue(), clientId.getValue(), pageable)
+                .map(AppointmentEntityMapper::toDomain);
+    }
+
+    @Override
+    public Page<Appointment> findByVeterinarianIdAndPetId(UserId veterinarianId, PetId petId, Pageable pageable) {
+        return jpaRepository.findByVeterinarianIdAndPetId(veterinarianId.getValue(), petId.getValue(), pageable)
+                .map(AppointmentEntityMapper::toDomain);
+    }
+
+    @Override
     public Page<Appointment> findByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable) {
         return jpaRepository.findByDateBetween(startDate, endDate, pageable)
                 .map(AppointmentEntityMapper::toDomain);

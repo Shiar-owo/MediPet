@@ -34,5 +34,9 @@ public interface AppointmentJpaRepository extends JpaRepository<AppointmentEntit
 
     Page<AppointmentEntity> findByVeterinarianId(UUID veterinarianId, Pageable pageable);
 
+    Page<AppointmentEntity> findByVeterinarianIdAndClientId(UUID veterinarianId, UUID clientId, Pageable pageable);
+
+    Page<AppointmentEntity> findByVeterinarianIdAndPetId(UUID veterinarianId, UUID petId, Pageable pageable);
+
     Page<AppointmentEntity> findByDateBetween(LocalDate startDate, LocalDate endDate, Pageable pageable);
 }

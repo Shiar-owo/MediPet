@@ -18,9 +18,5 @@ public interface AppointmentQueryService {
     PageResponse<Appointment> findByVeterinarianIdAndClientId(UserId veterinarianId, ClientId clientId, Pageable pageable);
     PageResponse<Appointment> findByVeterinarianIdAndPetId(UserId veterinarianId, PetId petId, Pageable pageable);
     PageResponse<Appointment> findByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable);
-    PageResponse<Appointment> findAll(String query, Pageable pageable);
-
-    PageResponse<Appointment> findForCurrentUserByClientId(ClientId clientId, Pageable pageable);
-    PageResponse<Appointment> findForCurrentUserByPetId(PetId petId, Pageable pageable);
-    PageResponse<Appointment> findForCurrentUser(LocalDate date, Pageable pageable);
+    PageResponse<Appointment> findAll(Pageable pageable);
 }

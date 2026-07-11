@@ -106,7 +106,7 @@ class AppointmentQueryServiceImpl implements AppointmentQueryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<Appointment> findAll(String query, Pageable pageable) {
+    public PageResponse<Appointment> findAll(Pageable pageable) {
         Page<Appointment> page = appointmentRepository.findAll(pageable);
         return new PageResponse<>(
                 page.getContent(),
@@ -114,26 +114,5 @@ class AppointmentQueryServiceImpl implements AppointmentQueryService {
                 page.getSize(),
                 page.getTotalElements(),
                 page.getTotalPages());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PageResponse<Appointment> findForCurrentUserByClientId(ClientId clientId, Pageable pageable) {
-        return findByClientId(clientId, pageable);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PageResponse<Appointment> findForCurrentUserByPetId(PetId petId, Pageable pageable) {
-        return findByPetId(petId, pageable);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PageResponse<Appointment> findForCurrentUser(LocalDate date, Pageable pageable) {
-        if (date != null) {
-            return findByDateRange(date, date, pageable);
-        }
-        return findAll(null, pageable);
     }
 }

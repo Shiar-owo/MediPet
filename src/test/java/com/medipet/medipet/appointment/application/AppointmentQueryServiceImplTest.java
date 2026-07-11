@@ -124,56 +124,33 @@ class AppointmentQueryServiceImplTest {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 20), 1);
         when(appointmentRepository.findAll(PageRequest.of(0, 20))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findAll(null, PageRequest.of(0, 20));
+        PageResponse<Appointment> result = appointmentQueryService.findAll(PageRequest.of(0, 20));
 
         assertEquals(1, result.getContent().size());
         verify(appointmentRepository).findAll(PageRequest.of(0, 20));
     }
 
-    // ========== findForCurrentUser tests ==========
+    // ========== Vet-scoped query tests ==========
 
     @Test
-    void shouldFindForCurrentUserByClientId() {
+    void shouldFindByVeterinarianIdAndClientId() {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 10), 1);
-        when(appointmentRepository.findByClientId(clientId, PageRequest.of(0, 10))).thenReturn(page);
+        when(appointmentRepository.findByVeterinarianIdAndClientId(vetId, clientId, PageRequest.of(0, 10))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findForCurrentUserByClientId(clientId, PageRequest.of(0, 10));
+        PageResponse<Appointment> result = appointmentQueryService.findByVeterinarianIdAndClientId(vetId, clientId, PageRequest.of(0, 10));
 
         assertEquals(1, result.getContent().size());
-        verify(appointmentRepository).findByClientId(clientId, PageRequest.of(0, 10));
+        verify(appointmentRepository).findByVeterinarianIdAndClientId(vetId, clientId, PageRequest.of(0, 10));
     }
 
     @Test
-    void shouldFindForCurrentUserByPetId() {
+    void shouldFindByVeterinarianIdAndPetId() {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 10), 1);
-        when(appointmentRepository.findByPetId(petId, PageRequest.of(0, 10))).thenReturn(page);
+        when(appointmentRepository.findByVeterinarianIdAndPetId(vetId, petId, PageRequest.of(0, 10))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findForCurrentUserByPetId(petId, PageRequest.of(0, 10));
-
-        assertEquals(1, result.getContent().size());
-        verify(appointmentRepository).findByPetId(petId, PageRequest.of(0, 10));
-    }
-
-    @Test
-    void shouldFindForCurrentUserWithDate() {
-        LocalDate date = LocalDate.of(2026, 7, 10);
-        Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 20), 1);
-        when(appointmentRepository.findByDateRange(date, date, PageRequest.of(0, 20))).thenReturn(page);
-
-        PageResponse<Appointment> result = appointmentQueryService.findForCurrentUser(date, PageRequest.of(0, 20));
+        PageResponse<Appointment> result = appointmentQueryService.findByVeterinarianIdAndPetId(vetId, petId, PageRequest.of(0, 10));
 
         assertEquals(1, result.getContent().size());
-        verify(appointmentRepository).findByDateRange(date, date, PageRequest.of(0, 20));
-    }
-
-    @Test
-    void shouldFindForCurrentUserWithoutDate() {
-        Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 20), 1);
-        when(appointmentRepository.findAll(PageRequest.of(0, 20))).thenReturn(page);
-
-        PageResponse<Appointment> result = appointmentQueryService.findForCurrentUser(null, PageRequest.of(0, 20));
-
-        assertEquals(1, result.getContent().size());
-        verify(appointmentRepository).findAll(PageRequest.of(0, 20));
+        verify(appointmentRepository).findByVeterinarianIdAndPetId(vetId, petId, PageRequest.of(0, 10));
     }
 }

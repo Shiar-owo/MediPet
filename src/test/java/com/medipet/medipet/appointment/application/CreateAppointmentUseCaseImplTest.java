@@ -1,6 +1,7 @@
 package com.medipet.medipet.appointment.application;
 
 import com.medipet.medipet.appointment.domain.model.Appointment;
+import com.medipet.medipet.appointment.domain.port.inbound.AppointmentAuthorizationPort;
 import com.medipet.medipet.appointment.domain.port.outbound.AppointmentRepository;
 import com.medipet.medipet.client.domain.model.Client;
 import com.medipet.medipet.client.domain.port.outbound.ClientRepository;
@@ -10,7 +11,9 @@ import com.medipet.medipet.pet.domain.port.outbound.PetRepository;
 import com.medipet.medipet.pet.domain.valueobject.PetId;
 import com.medipet.medipet.shared.exception.BadRequestException;
 import com.medipet.medipet.shared.exception.ConflictException;
+import com.medipet.medipet.shared.exception.ForbiddenException;
 import com.medipet.medipet.shared.exception.NotFoundException;
+import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.port.outbound.UserRepository;
 import com.medipet.medipet.user.domain.valueobject.UserId;
@@ -42,6 +45,8 @@ class CreateAppointmentUseCaseImplTest {
     private ClientRepository clientRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private AppointmentAuthorizationPort authorizationPort;
 
     private CreateAppointmentUseCaseImpl createAppointmentUseCase;
 
@@ -52,7 +57,7 @@ class CreateAppointmentUseCaseImplTest {
     @BeforeEach
     void setUp() {
         createAppointmentUseCase = new CreateAppointmentUseCaseImpl(
-                appointmentRepository, petRepository, clientRepository, userRepository);
+                appointmentRepository, petRepository, clientRepository, userRepository, authorizationPort);
         petId = PetId.generate();
         clientId = ClientId.generate();
         vetId = UserId.generate();
@@ -60,6 +65,7 @@ class CreateAppointmentUseCaseImplTest {
 
     @Test
     void shouldCreateAppointmentSuccessfully() {
+        when(authorizationPort.getCurrentUserRole()).thenReturn(Role.ADMIN);
         when(petRepository.findById(petId)).thenReturn(Optional.of(
                 Pet.withId(petId, "Luna", "Dog", "Labrador", null, "Female", "Golden",
                         null, null, null, null, true, clientId)));
@@ -91,6 +97,7 @@ class CreateAppointmentUseCaseImplTest {
 
     @Test
     void shouldThrowNotFoundWhenPetDoesNotExist() {
+        when(authorizationPort.getCurrentUserRole()).thenReturn(Role.ADMIN);
         when(petRepository.findById(petId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () ->
@@ -103,6 +110,7 @@ class CreateAppointmentUseCaseImplTest {
 
     @Test
     void shouldThrowNotFoundWhenVeterinarianDoesNotExist() {
+        when(authorizationPort.getCurrentUserRole()).thenReturn(Role.ADMIN);
         when(petRepository.findById(petId)).thenReturn(Optional.of(
                 Pet.withId(petId, "Luna", "Dog", "Labrador", null, "Female", "Golden",
                         null, null, null, null, true, clientId)));
@@ -121,6 +129,7 @@ class CreateAppointmentUseCaseImplTest {
 
     @Test
     void shouldThrowConflictWhenOverlapExists() {
+        when(authorizationPort.getCurrentUserRole()).thenReturn(Role.ADMIN);
         when(petRepository.findById(petId)).thenReturn(Optional.of(
                 Pet.withId(petId, "Luna", "Dog", "Labrador", null, "Female", "Golden",
                         null, null, null, null, true, clientId)));
@@ -146,6 +155,7 @@ class CreateAppointmentUseCaseImplTest {
 
     @Test
     void shouldThrowBadRequestWhenEndTimeBeforeStartTime() {
+        when(authorizationPort.getCurrentUserRole()).thenReturn(Role.ADMIN);
         when(petRepository.findById(petId)).thenReturn(Optional.of(
                 Pet.withId(petId, "Luna", "Dog", "Labrador", null, "Female", "Golden",
                         null, null, null, null, true, clientId)));
@@ -163,5 +173,45 @@ class CreateAppointmentUseCaseImplTest {
                         "Annual checkup", petId, clientId, vetId));
 
         verify(appointmentRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowForbiddenWhenVetTriesToCreateForOtherVet() {
+        UserId otherVetId = UserId.generate();
+        when(authorizationPort.getCurrentUserRole()).thenReturn(Role.VETERINARIO);
+        when(authorizationPort.getCurrentUserId()).thenReturn(vetId);
+
+        assertThrows(ForbiddenException.class, () ->
+                createAppointmentUseCase.execute(
+                        LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                        "Annual checkup", petId, clientId, otherVetId));
+
+        verify(appointmentRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldAllowVetToCreateForSelf() {
+        when(authorizationPort.getCurrentUserRole()).thenReturn(Role.VETERINARIO);
+        when(authorizationPort.getCurrentUserId()).thenReturn(vetId);
+        when(petRepository.findById(petId)).thenReturn(Optional.of(
+                Pet.withId(petId, "Luna", "Dog", "Labrador", null, "Female", "Golden",
+                        null, null, null, null, true, clientId)));
+        when(clientRepository.findById(clientId)).thenReturn(Optional.of(
+                Client.withId(clientId, "Maria Garcia", "12345678", "+549115551234",
+                        "maria@example.com", "Av. Corrientes 1234", true)));
+        when(userRepository.findById(vetId)).thenReturn(Optional.of(
+                User.withId(vetId, "vet@medipet.com", "pass", "Dr. Juan", "Lopez",
+                        com.medipet.medipet.user.domain.model.Role.VETERINARIO, true,
+                        null, null, null, null, null)));
+        when(appointmentRepository.findOverlapping(vetId, LocalDate.of(2026, 7, 10),
+                LocalTime.of(9, 0), LocalTime.of(10, 0))).thenReturn(Collections.emptyList());
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Appointment result = createAppointmentUseCase.execute(
+                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                "Annual checkup", petId, clientId, vetId);
+
+        assertNotNull(result);
+        assertEquals(vetId, result.getVeterinarianId());
     }
 }

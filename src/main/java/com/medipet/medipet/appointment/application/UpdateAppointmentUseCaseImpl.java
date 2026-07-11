@@ -1,12 +1,15 @@
 package com.medipet.medipet.appointment.application;
 
 import com.medipet.medipet.appointment.domain.model.Appointment;
+import com.medipet.medipet.appointment.domain.port.inbound.AppointmentAuthorizationPort;
 import com.medipet.medipet.appointment.domain.port.inbound.UpdateAppointmentUseCase;
 import com.medipet.medipet.appointment.domain.port.outbound.AppointmentRepository;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
 import com.medipet.medipet.shared.exception.BadRequestException;
 import com.medipet.medipet.shared.exception.ConflictException;
+import com.medipet.medipet.shared.exception.ForbiddenException;
 import com.medipet.medipet.shared.exception.NotFoundException;
+import com.medipet.medipet.user.domain.model.Role;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +20,12 @@ import java.time.LocalTime;
 class UpdateAppointmentUseCaseImpl implements UpdateAppointmentUseCase {
 
     private final AppointmentRepository appointmentRepository;
+    private final AppointmentAuthorizationPort authorizationPort;
 
-    UpdateAppointmentUseCaseImpl(AppointmentRepository appointmentRepository) {
+    UpdateAppointmentUseCaseImpl(AppointmentRepository appointmentRepository,
+                                 AppointmentAuthorizationPort authorizationPort) {
         this.appointmentRepository = appointmentRepository;
+        this.authorizationPort = authorizationPort;
     }
 
     @Override
@@ -28,6 +34,8 @@ class UpdateAppointmentUseCaseImpl implements UpdateAppointmentUseCase {
                                LocalTime endTime, String reason) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Appointment", id.getValue()));
+
+        enforceVeterinarianOwnership(appointment);
 
         LocalDate newDate = date != null ? date : appointment.getDate();
         LocalTime newStartTime = startTime != null ? startTime : appointment.getStartTime();
@@ -54,5 +62,13 @@ class UpdateAppointmentUseCaseImpl implements UpdateAppointmentUseCase {
         if (reason != null) appointment.setReason(reason);
 
         return appointmentRepository.save(appointment);
+    }
+
+    private void enforceVeterinarianOwnership(Appointment appointment) {
+        if (authorizationPort.getCurrentUserRole() == Role.VETERINARIO) {
+            if (!appointment.getVeterinarianId().equals(authorizationPort.getCurrentUserId())) {
+                throw new ForbiddenException("Veterinarians can only access their own appointments");
+            }
+        }
     }
 }

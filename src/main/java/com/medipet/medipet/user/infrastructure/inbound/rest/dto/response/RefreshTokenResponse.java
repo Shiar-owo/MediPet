@@ -9,9 +9,18 @@ import lombok.Getter;
 @Schema(description = "Token refresh response")
 public class RefreshTokenResponse {
 
+    @Schema(description = "User ID", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+    private String userId;
+
     @Schema(description = "New JWT access token", example = "eyJhbGciOiJIUzI1NiJ9...")
     private String accessToken;
 
     @Schema(description = "New JWT refresh token", example = "eyJhbGciOiJIUzI1NiJ9...")
     private String refreshToken;
+
+    @Schema(description = "Authenticated user email", example = "admin@medipet.com")
+    private String email;
+
+    @Schema(description = "User role", example = "ADMIN")
+    private String role;
 }

@@ -81,9 +81,10 @@ class AuthController {
         AuthService.LoginResult result = authService.issueTokens(request.getEmail());
 
         return ResponseEntity.ok(ApiResponse.ok(new LoginResponse(
+                result.userId(),
                 result.accessToken(),
                 result.refreshToken(),
-                request.getEmail(),
+                result.email(),
                 result.role())));
     }
 
@@ -100,8 +101,11 @@ class AuthController {
         AuthService.LoginResult result = authService.refreshToken(request.getRefreshToken());
 
         return ResponseEntity.ok(ApiResponse.ok(new RefreshTokenResponse(
+                result.userId(),
                 result.accessToken(),
-                result.refreshToken())));
+                result.refreshToken(),
+                result.email(),
+                result.role())));
     }
 
     @PostMapping("/logout")

@@ -52,6 +52,7 @@ class AppointmentController {
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Appointment created successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error or endTime before startTime", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Veterinarian cannot create appointments for another vet", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pet, client, or veterinarian not found", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Time overlap with existing appointment", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
@@ -76,6 +77,7 @@ class AppointmentController {
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Appointment updated successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error or endTime before startTime", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Veterinarian can only update own appointments", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Appointment not found", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Time overlap with existing appointment", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
@@ -98,6 +100,7 @@ class AppointmentController {
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Appointment cancelled"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Appointment already cancelled", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Veterinarian can only cancel own appointments", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Appointment not found", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
@@ -113,6 +116,7 @@ class AppointmentController {
     @Operation(summary = "Get appointment by ID", description = "Returns a single appointment by its UUID.")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Appointment found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Veterinarian can only view own appointments", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Appointment not found", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
@@ -128,7 +132,8 @@ class AppointmentController {
             @PathVariable String clientId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var appointments = appointmentQueryService.findByClientId(ClientId.from(clientId), PageRequest.of(page, size));
+        var appointments = appointmentQueryService.findByClientId(
+                ClientId.from(clientId), PageRequest.of(page, size));
         var response = new PageResponse<>(
                 appointments.getContent().stream().map(AppointmentMapper::toResponse).toList(),
                 appointments.getPage(),
@@ -145,7 +150,8 @@ class AppointmentController {
             @PathVariable String petId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var appointments = appointmentQueryService.findByPetId(PetId.from(petId), PageRequest.of(page, size));
+        var appointments = appointmentQueryService.findByPetId(
+                PetId.from(petId), PageRequest.of(page, size));
         var response = new PageResponse<>(
                 appointments.getContent().stream().map(AppointmentMapper::toResponse).toList(),
                 appointments.getPage(),
@@ -179,12 +185,10 @@ class AppointmentController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        PageResponse<com.medipet.medipet.appointment.domain.model.Appointment> appointments;
-        if (date != null) {
-            appointments = appointmentQueryService.findByDateRange(date, date, PageRequest.of(page, size));
-        } else {
-            appointments = appointmentQueryService.findAll(null, PageRequest.of(page, size));
-        }
+        var pageable = PageRequest.of(page, size);
+        var appointments = date != null
+                ? appointmentQueryService.findByDateRange(date, date, pageable)
+                : appointmentQueryService.findAll(pageable);
         var response = new PageResponse<>(
                 appointments.getContent().stream().map(AppointmentMapper::toResponse).toList(),
                 appointments.getPage(),

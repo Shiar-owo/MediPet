@@ -11,6 +11,7 @@ import com.medipet.medipet.user.infrastructure.inbound.rest.dto.request.UpdateUs
 import com.medipet.medipet.user.infrastructure.inbound.rest.dto.response.UserResponse;
 import com.medipet.medipet.user.infrastructure.inbound.rest.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,7 @@ class UserController {
 
     @GetMapping
     @Operation(summary = "List users", description = "Returns a paginated list of all users.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of users")
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -55,6 +57,11 @@ class UserController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID", description = "Returns a single user by their UUID.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<UserResponse>> getById(@PathVariable String id) {
         var user = userQueryService.findById(UserId.from(id));
         return ResponseEntity.ok(ApiResponse.ok(UserMapper.toResponse(user)));
@@ -62,6 +69,12 @@ class UserController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update user", description = "Updates user profile fields. Only provided fields are changed.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<UserResponse>> update(
             @PathVariable String id,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -78,6 +91,11 @@ class UserController {
 
     @PatchMapping("/{id}/deactivate")
     @Operation(summary = "Deactivate user", description = "Deactivates a user account. Deactivated users cannot log in.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User deactivated"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable String id) {
         deactivateUserUseCase.execute(UserId.from(id));
         return ResponseEntity.ok(ApiResponse.ok());
@@ -85,6 +103,11 @@ class UserController {
 
     @PatchMapping("/{id}/activate")
     @Operation(summary = "Activate user", description = "Reactivates a previously deactivated user account.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User activated"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<Void>> activate(@PathVariable String id) {
         activateUserUseCase.execute(UserId.from(id));
         return ResponseEntity.ok(ApiResponse.ok());

@@ -12,6 +12,7 @@ import com.medipet.medipet.user.infrastructure.inbound.rest.dto.response.Refresh
 import com.medipet.medipet.user.infrastructure.inbound.rest.dto.response.UserResponse;
 import com.medipet.medipet.user.infrastructure.inbound.rest.mapper.UserMapper;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,12 @@ class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user", description = "Creates a new user account. Requires ADMIN role.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "User registered successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Email already exists", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterUserRequest request) {
         Role role = request.getRole() != null
                 ? Role.valueOf(request.getRole().toUpperCase())
@@ -61,6 +68,12 @@ class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Login", description = "Authenticates a user and returns JWT access and refresh tokens.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login successful"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
@@ -76,6 +89,12 @@ class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "Refresh token", description = "Exchanges a valid refresh token for a new access/refresh token pair.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid or expired refresh token", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<RefreshTokenResponse>> refresh(
             @Valid @RequestBody RefreshTokenRequest request) {
         AuthService.LoginResult result = authService.refreshToken(request.getRefreshToken());
@@ -87,6 +106,7 @@ class AuthController {
 
     @PostMapping("/logout")
     @Operation(summary = "Logout", description = "Invalidates a refresh token.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Logged out successfully")
     public ResponseEntity<ApiResponse<Void>> logout(
             @Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(request.getRefreshToken());

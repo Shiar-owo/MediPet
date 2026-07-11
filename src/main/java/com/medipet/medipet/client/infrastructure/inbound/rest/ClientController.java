@@ -11,6 +11,7 @@ import com.medipet.medipet.client.infrastructure.inbound.rest.mapper.ClientMappe
 import com.medipet.medipet.shared.dto.ApiResponse;
 import com.medipet.medipet.shared.dto.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +39,12 @@ class ClientController {
 
     @PostMapping
     @Operation(summary = "Create a new client", description = "Registers a new client with DNI, name, and optional contact info.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Client created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "DNI already exists", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<ClientResponse>> create(@Valid @RequestBody ClientRequest request) {
         var client = createClientUseCase.execute(
                 request.getName(),
@@ -53,6 +60,12 @@ class ClientController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a client", description = "Updates client fields. Only provided non-null fields are changed.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Client not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<ClientResponse>> update(
             @PathVariable String id,
             @Valid @RequestBody UpdateClientRequest request) {
@@ -68,6 +81,11 @@ class ClientController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get client by ID", description = "Returns a single client by their UUID.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Client not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<ClientResponse>> getById(@PathVariable String id) {
         var client = clientQueryService.findById(ClientId.from(id));
         return ResponseEntity.ok(ApiResponse.ok(ClientMapper.toResponse(client)));
@@ -75,6 +93,11 @@ class ClientController {
 
     @GetMapping("/dni/{dni}")
     @Operation(summary = "Get client by DNI", description = "Returns a single client by their national ID number.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Client not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<ClientResponse>> getByDni(@PathVariable String dni) {
         var client = clientQueryService.findByDni(dni);
         return ResponseEntity.ok(ApiResponse.ok(ClientMapper.toResponse(client)));
@@ -82,6 +105,7 @@ class ClientController {
 
     @GetMapping
     @Operation(summary = "List/search clients", description = "Returns a paginated list. Optional ?q= filters by name.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of clients")
     public ResponseEntity<ApiResponse<PageResponse<ClientResponse>>> getAll(
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,

@@ -15,6 +15,7 @@ import com.medipet.medipet.shared.dto.ApiResponse;
 import com.medipet.medipet.shared.dto.PageResponse;
 import com.medipet.medipet.user.domain.valueobject.UserId;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +49,13 @@ class AppointmentController {
 
     @PostMapping
     @Operation(summary = "Create a new appointment", description = "Schedules a new appointment. Checks for time overlap with existing appointments for the same veterinarian.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Appointment created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error or endTime before startTime", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pet, client, or veterinarian not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Time overlap with existing appointment", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<AppointmentResponse>> create(@Valid @RequestBody AppointmentRequest request) {
         var appointment = createAppointmentUseCase.execute(
                 LocalDate.parse(request.getDate()),
@@ -65,6 +73,13 @@ class AppointmentController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update an appointment", description = "Updates appointment fields. Re-checks overlap if date or time is changed.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Appointment updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error or endTime before startTime", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Appointment not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Time overlap with existing appointment", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<AppointmentResponse>> update(
             @PathVariable String id,
             @Valid @RequestBody UpdateAppointmentRequest request) {
@@ -80,6 +95,12 @@ class AppointmentController {
 
     @PatchMapping("/{id}/cancel")
     @Operation(summary = "Cancel an appointment", description = "Cancels an appointment with an optional reason.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Appointment cancelled"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Appointment already cancelled", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Appointment not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<AppointmentResponse>> cancel(
             @PathVariable String id,
             @RequestBody(required = false) java.util.Map<String, String> body) {
@@ -90,6 +111,11 @@ class AppointmentController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get appointment by ID", description = "Returns a single appointment by its UUID.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Appointment found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Appointment not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<AppointmentResponse>> getById(@PathVariable String id) {
         var appointment = appointmentQueryService.findById(AppointmentId.from(id));
         return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(appointment)));
@@ -97,6 +123,7 @@ class AppointmentController {
 
     @GetMapping("/client/{clientId}")
     @Operation(summary = "List appointments by client", description = "Returns paginated appointments for a specific client.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of appointments")
     public ResponseEntity<ApiResponse<PageResponse<AppointmentResponse>>> getByClientId(
             @PathVariable String clientId,
             @RequestParam(defaultValue = "0") int page,
@@ -113,6 +140,7 @@ class AppointmentController {
 
     @GetMapping("/pet/{petId}")
     @Operation(summary = "List appointments by pet", description = "Returns paginated appointments for a specific pet.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of appointments")
     public ResponseEntity<ApiResponse<PageResponse<AppointmentResponse>>> getByPetId(
             @PathVariable String petId,
             @RequestParam(defaultValue = "0") int page,
@@ -129,6 +157,7 @@ class AppointmentController {
 
     @GetMapping("/veterinarian/{vetId}")
     @Operation(summary = "List appointments by veterinarian", description = "Returns paginated appointments for a specific veterinarian.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of appointments")
     public ResponseEntity<ApiResponse<PageResponse<AppointmentResponse>>> getByVeterinarianId(
             @PathVariable String vetId,
             @RequestParam(defaultValue = "0") int page,
@@ -145,6 +174,7 @@ class AppointmentController {
 
     @GetMapping
     @Operation(summary = "List/search appointments", description = "Returns a paginated list. Optional ?date= filters by date.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of appointments")
     public ResponseEntity<ApiResponse<PageResponse<AppointmentResponse>>> getAll(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "0") int page,

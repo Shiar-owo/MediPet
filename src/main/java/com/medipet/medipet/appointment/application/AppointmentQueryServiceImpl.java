@@ -1,16 +1,13 @@
 package com.medipet.medipet.appointment.application;
 
 import com.medipet.medipet.appointment.domain.model.Appointment;
-import com.medipet.medipet.appointment.domain.port.inbound.AppointmentAuthorizationPort;
 import com.medipet.medipet.appointment.domain.port.inbound.AppointmentQueryService;
 import com.medipet.medipet.appointment.domain.port.outbound.AppointmentRepository;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
 import com.medipet.medipet.client.domain.valueobject.ClientId;
 import com.medipet.medipet.pet.domain.valueobject.PetId;
 import com.medipet.medipet.shared.dto.PageResponse;
-import com.medipet.medipet.shared.exception.ForbiddenException;
 import com.medipet.medipet.shared.exception.NotFoundException;
-import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.valueobject.UserId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,21 +20,16 @@ import java.time.LocalDate;
 class AppointmentQueryServiceImpl implements AppointmentQueryService {
 
     private final AppointmentRepository appointmentRepository;
-    private final AppointmentAuthorizationPort authorizationPort;
 
-    AppointmentQueryServiceImpl(AppointmentRepository appointmentRepository,
-                                AppointmentAuthorizationPort authorizationPort) {
+    AppointmentQueryServiceImpl(AppointmentRepository appointmentRepository) {
         this.appointmentRepository = appointmentRepository;
-        this.authorizationPort = authorizationPort;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Appointment findById(AppointmentId id) {
-        Appointment appointment = appointmentRepository.findById(id)
+        return appointmentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Appointment", id.getValue()));
-        enforceVeterinarianOwnership(appointment);
-        return appointment;
     }
 
     @Override
@@ -127,38 +119,21 @@ class AppointmentQueryServiceImpl implements AppointmentQueryService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<Appointment> findForCurrentUserByClientId(ClientId clientId, Pageable pageable) {
-        if (authorizationPort.getCurrentUserRole() == Role.VETERINARIO) {
-            return findByVeterinarianIdAndClientId(authorizationPort.getCurrentUserId(), clientId, pageable);
-        }
         return findByClientId(clientId, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<Appointment> findForCurrentUserByPetId(PetId petId, Pageable pageable) {
-        if (authorizationPort.getCurrentUserRole() == Role.VETERINARIO) {
-            return findByVeterinarianIdAndPetId(authorizationPort.getCurrentUserId(), petId, pageable);
-        }
         return findByPetId(petId, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<Appointment> findForCurrentUser(LocalDate date, Pageable pageable) {
-        if (authorizationPort.getCurrentUserRole() == Role.VETERINARIO) {
-            return findByVeterinarianId(authorizationPort.getCurrentUserId(), pageable);
-        }
         if (date != null) {
             return findByDateRange(date, date, pageable);
         }
         return findAll(null, pageable);
-    }
-
-    private void enforceVeterinarianOwnership(Appointment appointment) {
-        if (authorizationPort.getCurrentUserRole() == Role.VETERINARIO) {
-            if (!appointment.getVeterinarianId().equals(authorizationPort.getCurrentUserId())) {
-                throw new ForbiddenException("Veterinarians can only access their own appointments");
-            }
-        }
     }
 }

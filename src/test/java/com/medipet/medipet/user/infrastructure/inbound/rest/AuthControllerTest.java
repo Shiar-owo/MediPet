@@ -72,7 +72,7 @@ class AuthControllerTest {
                 "Jane", "Doe", Role.VETERINARIO, true, null, null, null, null, null);
 
         when(createUserUseCase.execute("new@example.com", "password123",
-                "Jane", "Doe", Role.VETERINARIO)).thenReturn(user);
+                "Jane", "Doe", Role.VETERINARIO, null, null, null, null)).thenReturn(user);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -67,7 +67,7 @@ class AppointmentPersistenceAdapterTest {
         petId = savedPet.getId();
 
         User vet = User.create("vet@medipet.com", "password123", "Dr. Juan", "Lopez",
-                Role.VETERINARIO);
+                Role.VETERINARIO, null, null, null, null);
         User savedVet = userRepository.save(vet);
         vetId = savedVet.getId();
     }
@@ -126,7 +126,7 @@ class AppointmentPersistenceAdapterTest {
     @Test
     void shouldNotFindOverlappingWhenDifferentVet() {
         User otherVet = User.create("other@medipet.com", "password123", "Dr. Ana", "Martinez",
-                Role.VETERINARIO);
+                Role.VETERINARIO, null, null, null, null);
         User savedOtherVet = userRepository.save(otherVet);
 
         Appointment appointment = Appointment.create(LocalDate.of(2026, 7, 10),

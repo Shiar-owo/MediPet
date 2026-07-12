@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
+import java.time.LocalDate;
+
 @Getter
 @Schema(description = "Register new user request (ADMIN only)")
 public class RegisterUserRequest {
@@ -26,6 +28,15 @@ public class RegisterUserRequest {
 
     @Schema(description = "Phone number", example = "+5491155551234")
     private String phone;
+
+    @Schema(description = "Address", example = "Av. Corrientes 1234")
+    private String address;
+
+    @Schema(description = "Date of birth (ISO-8601)", example = "1990-01-15")
+    private LocalDate dateOfBirth;
+
+    @Schema(description = "Avatar URL", example = "https://example.com/avatar.jpg")
+    private String avatar;
 
     @Schema(description = "User role", example = "VETERINARIO", allowableValues = {"ADMIN", "VETERINARIO", "RECEPCIONISTA"})
     private String role;

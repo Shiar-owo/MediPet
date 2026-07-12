@@ -1,6 +1,6 @@
 package com.medipet.medipet.appointment.domain.port.inbound;
 
-import com.medipet.medipet.appointment.domain.model.Appointment;
+import com.medipet.medipet.appointment.application.AppointmentSummary;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
 import com.medipet.medipet.client.domain.valueobject.ClientId;
 import com.medipet.medipet.pet.domain.valueobject.PetId;
@@ -11,12 +11,12 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 
 public interface AppointmentQueryService {
-    Appointment findById(AppointmentId id);
-    PageResponse<Appointment> findByClientId(ClientId clientId, Pageable pageable);
-    PageResponse<Appointment> findByPetId(PetId petId, Pageable pageable);
-    PageResponse<Appointment> findByVeterinarianId(UserId veterinarianId, Pageable pageable);
-    PageResponse<Appointment> findByVeterinarianIdAndClientId(UserId veterinarianId, ClientId clientId, Pageable pageable);
-    PageResponse<Appointment> findByVeterinarianIdAndPetId(UserId veterinarianId, PetId petId, Pageable pageable);
-    PageResponse<Appointment> findByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable);
-    PageResponse<Appointment> findAll(Pageable pageable);
+    AppointmentSummary findById(AppointmentId id);
+    PageResponse<AppointmentSummary> findByClientId(ClientId clientId, Pageable pageable);
+    PageResponse<AppointmentSummary> findByPetId(PetId petId, Pageable pageable);
+    PageResponse<AppointmentSummary> findByVeterinarianId(UserId veterinarianId, Pageable pageable);
+    PageResponse<AppointmentSummary> findByVeterinarianIdAndClientId(UserId veterinarianId, ClientId clientId, Pageable pageable);
+    PageResponse<AppointmentSummary> findByVeterinarianIdAndPetId(UserId veterinarianId, PetId petId, Pageable pageable);
+    PageResponse<AppointmentSummary> findByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable);
+    PageResponse<AppointmentSummary> findAll(Pageable pageable);
 }

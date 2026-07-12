@@ -2,10 +2,11 @@ package com.medipet.medipet.appointment.infrastructure.inbound.rest;
 
 import com.medipet.medipet.appointment.domain.model.Appointment;
 import com.medipet.medipet.appointment.domain.model.AppointmentStatus;
-import com.medipet.medipet.appointment.domain.port.inbound.AppointmentQueryService;
-import com.medipet.medipet.appointment.domain.port.inbound.CancelAppointmentUseCase;
-import com.medipet.medipet.appointment.domain.port.inbound.CreateAppointmentUseCase;
-import com.medipet.medipet.appointment.domain.port.inbound.UpdateAppointmentUseCase;
+import com.medipet.medipet.appointment.application.AppointmentSummary;
+import com.medipet.medipet.appointment.application.port.inbound.AppointmentQueryService;
+import com.medipet.medipet.appointment.application.port.inbound.CancelAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.CreateAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.UpdateAppointmentUseCase;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
 import com.medipet.medipet.client.domain.valueobject.ClientId;
 import com.medipet.medipet.pet.domain.valueobject.PetId;
@@ -29,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.startsWith;
@@ -69,15 +71,21 @@ class AppointmentControllerTest {
 
     private static final String VET_ID = "d4e5f6a7-b8c9-0123-defa-234567890123";
     private static final String OTHER_VET_ID = "e5f6a7b8-c9d0-1234-efab-345678901234";
+    private static final String PET_ID = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
+    private static final String CLIENT_ID = "c3d4e5f6-a7b8-9012-cdef-123456789012";
 
     private Appointment createTestAppointment(String id) {
         return Appointment.withId(AppointmentId.from(UUID.fromString(id)),
                 LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup", AppointmentStatus.PENDIENTE, null,
-                PetId.from(UUID.fromString("b2c3d4e5-f6a7-8901-bcde-f12345678901")),
-                ClientId.from(UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012")),
+                PetId.from(UUID.fromString(PET_ID)),
+                ClientId.from(UUID.fromString(CLIENT_ID)),
                 UserId.from(UUID.fromString(VET_ID)),
                 true);
+    }
+
+    private AppointmentSummary createTestSummary(String id) {
+        return AppointmentSummary.from(createTestAppointment(id), Map.of(), Map.of(), Map.of());
     }
 
     // ========== CRUD tests ==========
@@ -86,20 +94,22 @@ class AppointmentControllerTest {
     void shouldCreateAppointment() throws Exception {
         String id = UUID.randomUUID().toString();
         Appointment appointment = createTestAppointment(id);
+        AppointmentSummary summary = createTestSummary(id);
 
         when(createAppointmentUseCase.execute(
                 LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup",
-                PetId.from("b2c3d4e5-f6a7-8901-bcde-f12345678901"),
-                ClientId.from("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                PetId.from(PET_ID),
+                ClientId.from(CLIENT_ID),
                 UserId.from(VET_ID)))
                 .thenReturn(appointment);
+        when(appointmentQueryService.findById(appointment.getId())).thenReturn(summary);
 
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"b2c3d4e5-f6a7-8901-bcde-f12345678901","clientId":"c3d4e5f6-a7b8-9012-cdef-123456789012","veterinarianId":"%s"}
-                                """.formatted(VET_ID)))
+                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
+                                """.formatted(PET_ID, CLIENT_ID, VET_ID)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", startsWith("/api/appointments/")))
                 .andExpect(jsonPath("$.success").value(true))
@@ -113,16 +123,16 @@ class AppointmentControllerTest {
         when(createAppointmentUseCase.execute(
                 LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup",
-                PetId.from("b2c3d4e5-f6a7-8901-bcde-f12345678901"),
-                ClientId.from("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                PetId.from(PET_ID),
+                ClientId.from(CLIENT_ID),
                 UserId.from(VET_ID)))
                 .thenThrow(new ConflictException("Appointment overlaps with an existing appointment"));
 
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"b2c3d4e5-f6a7-8901-bcde-f12345678901","clientId":"c3d4e5f6-a7b8-9012-cdef-123456789012","veterinarianId":"%s"}
-                                """.formatted(VET_ID)))
+                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
+                                """.formatted(PET_ID, CLIENT_ID, VET_ID)))
                 .andExpect(status().isConflict());
     }
 
@@ -132,15 +142,17 @@ class AppointmentControllerTest {
         Appointment updated = Appointment.withId(AppointmentId.from(UUID.fromString(id)),
                 LocalDate.of(2026, 7, 11), LocalTime.of(14, 0), LocalTime.of(15, 0),
                 "Vaccination", AppointmentStatus.PENDIENTE, null,
-                PetId.from(UUID.fromString("b2c3d4e5-f6a7-8901-bcde-f12345678901")),
-                ClientId.from(UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012")),
+                PetId.from(UUID.fromString(PET_ID)),
+                ClientId.from(UUID.fromString(CLIENT_ID)),
                 UserId.from(UUID.fromString(VET_ID)),
                 true);
+        AppointmentSummary summary = AppointmentSummary.from(updated, Map.of(), Map.of(), Map.of());
 
         when(updateAppointmentUseCase.execute(AppointmentId.from(id),
                 LocalDate.of(2026, 7, 11), LocalTime.of(14, 0), LocalTime.of(15, 0),
                 "Vaccination"))
                 .thenReturn(updated);
+        when(appointmentQueryService.findById(updated.getId())).thenReturn(summary);
 
         mockMvc.perform(put("/api/appointments/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -177,13 +189,15 @@ class AppointmentControllerTest {
         Appointment cancelled = Appointment.withId(AppointmentId.from(UUID.fromString(id)),
                 LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup", AppointmentStatus.CANCELADA, "Client requested",
-                PetId.from(UUID.fromString("b2c3d4e5-f6a7-8901-bcde-f12345678901")),
-                ClientId.from(UUID.fromString("c3d4e5f6-a7b8-9012-cdef-123456789012")),
+                PetId.from(UUID.fromString(PET_ID)),
+                ClientId.from(UUID.fromString(CLIENT_ID)),
                 UserId.from(UUID.fromString(VET_ID)),
                 true);
+        AppointmentSummary summary = AppointmentSummary.from(cancelled, Map.of(), Map.of(), Map.of());
 
         when(cancelAppointmentUseCase.execute(AppointmentId.from(id), "Client requested"))
                 .thenReturn(cancelled);
+        when(appointmentQueryService.findById(cancelled.getId())).thenReturn(summary);
 
         mockMvc.perform(patch("/api/appointments/{id}/cancel", id)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -199,9 +213,9 @@ class AppointmentControllerTest {
     @Test
     void shouldGetAppointmentById() throws Exception {
         String id = UUID.randomUUID().toString();
-        Appointment appointment = createTestAppointment(id);
+        AppointmentSummary summary = createTestSummary(id);
 
-        when(appointmentQueryService.findById(AppointmentId.from(id))).thenReturn(appointment);
+        when(appointmentQueryService.findById(AppointmentId.from(id))).thenReturn(summary);
 
         mockMvc.perform(get("/api/appointments/{id}", id))
                 .andExpect(status().isOk())
@@ -223,8 +237,8 @@ class AppointmentControllerTest {
     @Test
     void shouldListAppointments() throws Exception {
         String id = UUID.randomUUID().toString();
-        Appointment appointment = createTestAppointment(id);
-        PageResponse<Appointment> page = new PageResponse<>(List.of(appointment), 0, 20, 1, 1);
+        AppointmentSummary summary = createTestSummary(id);
+        PageResponse<AppointmentSummary> page = new PageResponse<>(List.of(summary), 0, 20, 1, 1);
 
         when(appointmentQueryService.findAll(any(PageRequest.class))).thenReturn(page);
 
@@ -239,8 +253,8 @@ class AppointmentControllerTest {
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"","startTime":"09:00","endTime":"10:00","petId":"b2c3d4e5-f6a7-8901-bcde-f12345678901","clientId":"c3d4e5f6-a7b8-9012-cdef-123456789012","veterinarianId":"%s"}
-                                """.formatted(VET_ID)))
+                                {"date":"","startTime":"09:00","endTime":"10:00","petId":"%s","clientId":"%s","veterinarianId":"%s"}
+                                """.formatted(PET_ID, CLIENT_ID, VET_ID)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -249,8 +263,8 @@ class AppointmentControllerTest {
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","petId":"","clientId":"c3d4e5f6-a7b8-9012-cdef-123456789012","veterinarianId":"%s"}
-                                """.formatted(VET_ID)))
+                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","petId":"","clientId":"%s","veterinarianId":"%s"}
+                                """.formatted(CLIENT_ID, VET_ID)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -259,8 +273,8 @@ class AppointmentControllerTest {
     @Test
     void shouldListAppointmentsByVeterinarian() throws Exception {
         String id = UUID.randomUUID().toString();
-        Appointment appointment = createTestAppointment(id);
-        PageResponse<Appointment> page = new PageResponse<>(List.of(appointment), 0, 20, 1, 1);
+        AppointmentSummary summary = createTestSummary(id);
+        PageResponse<AppointmentSummary> page = new PageResponse<>(List.of(summary), 0, 20, 1, 1);
 
         when(appointmentQueryService.findByVeterinarianId(
                 eq(UserId.from(VET_ID)), any(PageRequest.class)))
@@ -280,16 +294,16 @@ class AppointmentControllerTest {
         when(createAppointmentUseCase.execute(
                 LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup",
-                PetId.from("b2c3d4e5-f6a7-8901-bcde-f12345678901"),
-                ClientId.from("c3d4e5f6-a7b8-9012-cdef-123456789012"),
+                PetId.from(PET_ID),
+                ClientId.from(CLIENT_ID),
                 UserId.from(OTHER_VET_ID)))
                 .thenThrow(new ForbiddenException("Veterinarians can only create appointments for themselves"));
 
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"b2c3d4e5-f6a7-8901-bcde-f12345678901","clientId":"c3d4e5f6-a7b8-9012-cdef-123456789012","veterinarianId":"%s"}
-                                """.formatted(OTHER_VET_ID)))
+                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
+                                """.formatted(PET_ID, CLIENT_ID, OTHER_VET_ID)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
     }

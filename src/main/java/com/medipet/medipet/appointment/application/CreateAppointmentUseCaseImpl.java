@@ -1,8 +1,8 @@
 package com.medipet.medipet.appointment.application;
 
 import com.medipet.medipet.appointment.domain.model.Appointment;
-import com.medipet.medipet.appointment.domain.port.inbound.AppointmentAuthorizationPort;
-import com.medipet.medipet.appointment.domain.port.inbound.CreateAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.AppointmentAuthorizationPort;
+import com.medipet.medipet.appointment.application.port.inbound.CreateAppointmentUseCase;
 import com.medipet.medipet.appointment.domain.port.outbound.AppointmentRepository;
 import com.medipet.medipet.client.domain.port.outbound.ClientRepository;
 import com.medipet.medipet.client.domain.valueobject.ClientId;

@@ -2,8 +2,8 @@ package com.medipet.medipet.appointment.application;
 
 import com.medipet.medipet.appointment.domain.model.Appointment;
 import com.medipet.medipet.appointment.domain.model.AppointmentStatus;
-import com.medipet.medipet.appointment.domain.port.inbound.AppointmentAuthorizationPort;
-import com.medipet.medipet.appointment.domain.port.inbound.CancelAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.AppointmentAuthorizationPort;
+import com.medipet.medipet.appointment.application.port.inbound.CancelAppointmentUseCase;
 import com.medipet.medipet.appointment.domain.port.outbound.AppointmentRepository;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
 import com.medipet.medipet.shared.exception.BadRequestException;

@@ -1,9 +1,9 @@
 package com.medipet.medipet.appointment.infrastructure.inbound.rest;
 
-import com.medipet.medipet.appointment.domain.port.inbound.AppointmentQueryService;
-import com.medipet.medipet.appointment.domain.port.inbound.CancelAppointmentUseCase;
-import com.medipet.medipet.appointment.domain.port.inbound.CreateAppointmentUseCase;
-import com.medipet.medipet.appointment.domain.port.inbound.UpdateAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.AppointmentQueryService;
+import com.medipet.medipet.appointment.application.port.inbound.CancelAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.CreateAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.UpdateAppointmentUseCase;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
 import com.medipet.medipet.appointment.infrastructure.inbound.rest.dto.request.AppointmentRequest;
 import com.medipet.medipet.appointment.infrastructure.inbound.rest.dto.request.UpdateAppointmentRequest;
@@ -67,7 +67,8 @@ class AppointmentController {
                 ClientId.from(request.getClientId()),
                 UserId.from(request.getVeterinarianId()));
 
-        var response = AppointmentMapper.toResponse(appointment);
+        var summary = appointmentQueryService.findById(appointment.getId());
+        var response = AppointmentMapper.toResponse(summary);
         URI location = URI.create("/api/appointments/" + response.getId());
         return ResponseEntity.created(location).body(ApiResponse.ok(response));
     }
@@ -92,7 +93,8 @@ class AppointmentController {
                 request.getEndTime() != null ? LocalTime.parse(request.getEndTime()) : null,
                 request.getReason());
 
-        return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(appointment)));
+        var summary = appointmentQueryService.findById(appointment.getId());
+        return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(summary)));
     }
 
     @PatchMapping("/{id}/cancel")
@@ -109,20 +111,21 @@ class AppointmentController {
             @RequestBody(required = false) java.util.Map<String, String> body) {
         String cancelReason = body != null ? body.get("cancelReason") : null;
         var appointment = cancelAppointmentUseCase.execute(AppointmentId.from(id), cancelReason);
-        return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(appointment)));
+
+        var summary = appointmentQueryService.findById(appointment.getId());
+        return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(summary)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get appointment by ID", description = "Returns a single appointment by its UUID.")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Appointment found"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Veterinarian can only view own appointments", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Appointment not found", content = @Content),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
     })
     public ResponseEntity<ApiResponse<AppointmentResponse>> getById(@PathVariable String id) {
-        var appointment = appointmentQueryService.findById(AppointmentId.from(id));
-        return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(appointment)));
+        var summary = appointmentQueryService.findById(AppointmentId.from(id));
+        return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(summary)));
     }
 
     @GetMapping("/client/{clientId}")
@@ -132,14 +135,14 @@ class AppointmentController {
             @PathVariable String clientId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var appointments = appointmentQueryService.findByClientId(
+        var summaries = appointmentQueryService.findByClientId(
                 ClientId.from(clientId), PageRequest.of(page, size));
         var response = new PageResponse<>(
-                appointments.getContent().stream().map(AppointmentMapper::toResponse).toList(),
-                appointments.getPage(),
-                appointments.getSize(),
-                appointments.getTotalElements(),
-                appointments.getTotalPages());
+                summaries.getContent().stream().map(AppointmentMapper::toResponse).toList(),
+                summaries.getPage(),
+                summaries.getSize(),
+                summaries.getTotalElements(),
+                summaries.getTotalPages());
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
@@ -150,14 +153,14 @@ class AppointmentController {
             @PathVariable String petId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var appointments = appointmentQueryService.findByPetId(
+        var summaries = appointmentQueryService.findByPetId(
                 PetId.from(petId), PageRequest.of(page, size));
         var response = new PageResponse<>(
-                appointments.getContent().stream().map(AppointmentMapper::toResponse).toList(),
-                appointments.getPage(),
-                appointments.getSize(),
-                appointments.getTotalElements(),
-                appointments.getTotalPages());
+                summaries.getContent().stream().map(AppointmentMapper::toResponse).toList(),
+                summaries.getPage(),
+                summaries.getSize(),
+                summaries.getTotalElements(),
+                summaries.getTotalPages());
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
@@ -168,13 +171,13 @@ class AppointmentController {
             @PathVariable String vetId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        var appointments = appointmentQueryService.findByVeterinarianId(UserId.from(vetId), PageRequest.of(page, size));
+        var summaries = appointmentQueryService.findByVeterinarianId(UserId.from(vetId), PageRequest.of(page, size));
         var response = new PageResponse<>(
-                appointments.getContent().stream().map(AppointmentMapper::toResponse).toList(),
-                appointments.getPage(),
-                appointments.getSize(),
-                appointments.getTotalElements(),
-                appointments.getTotalPages());
+                summaries.getContent().stream().map(AppointmentMapper::toResponse).toList(),
+                summaries.getPage(),
+                summaries.getSize(),
+                summaries.getTotalElements(),
+                summaries.getTotalPages());
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
@@ -186,15 +189,15 @@ class AppointmentController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         var pageable = PageRequest.of(page, size);
-        var appointments = date != null
+        var summaries = date != null
                 ? appointmentQueryService.findByDateRange(date, date, pageable)
                 : appointmentQueryService.findAll(pageable);
         var response = new PageResponse<>(
-                appointments.getContent().stream().map(AppointmentMapper::toResponse).toList(),
-                appointments.getPage(),
-                appointments.getSize(),
-                appointments.getTotalElements(),
-                appointments.getTotalPages());
+                summaries.getContent().stream().map(AppointmentMapper::toResponse).toList(),
+                summaries.getPage(),
+                summaries.getSize(),
+                summaries.getTotalElements(),
+                summaries.getTotalPages());
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

@@ -2,7 +2,7 @@ package com.medipet.medipet.appointment.application;
 
 import com.medipet.medipet.appointment.domain.model.Appointment;
 import com.medipet.medipet.appointment.application.AppointmentSummary;
-import com.medipet.medipet.appointment.domain.port.inbound.AppointmentQueryService;
+import com.medipet.medipet.appointment.application.port.inbound.AppointmentQueryService;
 import com.medipet.medipet.appointment.domain.port.outbound.AppointmentRepository;
 import com.medipet.medipet.appointment.domain.port.outbound.ClientNameResolverPort;
 import com.medipet.medipet.appointment.domain.port.outbound.PetNameResolverPort;

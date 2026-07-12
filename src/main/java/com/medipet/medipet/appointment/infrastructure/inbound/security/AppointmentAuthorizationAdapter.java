@@ -1,6 +1,6 @@
 package com.medipet.medipet.appointment.infrastructure.inbound.security;
 
-import com.medipet.medipet.appointment.domain.port.inbound.AppointmentAuthorizationPort;
+import com.medipet.medipet.appointment.application.port.inbound.AppointmentAuthorizationPort;
 import com.medipet.medipet.shared.exception.NotFoundException;
 import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.model.User;

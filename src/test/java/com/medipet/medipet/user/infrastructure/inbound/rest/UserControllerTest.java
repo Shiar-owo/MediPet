@@ -2,12 +2,14 @@ package com.medipet.medipet.user.infrastructure.inbound.rest;
 
 import com.medipet.medipet.shared.dto.PageResponse;
 import com.medipet.medipet.shared.exception.NotFoundException;
+import com.medipet.medipet.shared.port.outbound.FileStoragePort;
 import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.port.inbound.ActivateUserUseCase;
 import com.medipet.medipet.user.domain.port.inbound.DeactivateUserUseCase;
 import com.medipet.medipet.user.domain.port.inbound.UpdateUserUseCase;
 import com.medipet.medipet.user.domain.port.inbound.UserQueryService;
+import com.medipet.medipet.user.domain.port.outbound.UserRepository;
 import com.medipet.medipet.user.domain.port.outbound.TokenProvider;
 import com.medipet.medipet.user.domain.valueobject.UserId;
 import com.medipet.medipet.user.infrastructure.inbound.security.JwtAuthenticationFilter;
@@ -48,6 +50,12 @@ class UserControllerTest {
 
     @MockitoBean
     private DeactivateUserUseCase deactivateUserUseCase;
+
+    @MockitoBean
+    private FileStoragePort fileStoragePort;
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     @MockitoBean
     private TokenProvider tokenProvider;

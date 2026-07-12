@@ -33,11 +33,20 @@ public class AppointmentResponse {
     @Schema(description = "Pet ID", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
     private String petId;
 
+    @Schema(description = "Pet name", example = "Max")
+    private String petName;
+
     @Schema(description = "Client ID", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
     private String clientId;
 
+    @Schema(description = "Client name", example = "Juan Pérez")
+    private String clientName;
+
     @Schema(description = "Veterinarian user ID", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
     private String veterinarianId;
+
+    @Schema(description = "Veterinarian name", example = "Dr. García")
+    private String veterinarianName;
 
     @Schema(description = "Whether the appointment is active", example = "true")
     private boolean active;

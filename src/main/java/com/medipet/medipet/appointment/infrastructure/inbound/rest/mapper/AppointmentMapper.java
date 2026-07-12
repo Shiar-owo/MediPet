@@ -1,6 +1,6 @@
 package com.medipet.medipet.appointment.infrastructure.inbound.rest.mapper;
 
-import com.medipet.medipet.appointment.domain.model.Appointment;
+import com.medipet.medipet.appointment.application.AppointmentSummary;
 import com.medipet.medipet.appointment.infrastructure.inbound.rest.dto.response.AppointmentResponse;
 
 import java.time.format.DateTimeFormatter;
@@ -13,19 +13,22 @@ public final class AppointmentMapper {
     private AppointmentMapper() {
     }
 
-    public static AppointmentResponse toResponse(Appointment appointment) {
+    public static AppointmentResponse toResponse(AppointmentSummary summary) {
         return new AppointmentResponse(
-                appointment.getId().getValue().toString(),
-                appointment.getDate() != null ? appointment.getDate().format(DATE_FORMAT) : null,
-                appointment.getStartTime() != null ? appointment.getStartTime().format(TIME_FORMAT) : null,
-                appointment.getEndTime() != null ? appointment.getEndTime().format(TIME_FORMAT) : null,
-                appointment.getReason(),
-                appointment.getStatus() != null ? appointment.getStatus().name() : null,
-                appointment.getCancelReason(),
-                appointment.getPetId().getValue().toString(),
-                appointment.getClientId().getValue().toString(),
-                appointment.getVeterinarianId().getValue().toString(),
-                appointment.isActive()
+                summary.getId().getValue().toString(),
+                summary.getDate() != null ? summary.getDate().format(DATE_FORMAT) : null,
+                summary.getStartTime() != null ? summary.getStartTime().format(TIME_FORMAT) : null,
+                summary.getEndTime() != null ? summary.getEndTime().format(TIME_FORMAT) : null,
+                summary.getReason(),
+                summary.getStatus() != null ? summary.getStatus().name() : null,
+                summary.getCancelReason(),
+                summary.getPetId().getValue().toString(),
+                summary.getPetName(),
+                summary.getClientId().getValue().toString(),
+                summary.getClientName(),
+                summary.getVeterinarianId().getValue().toString(),
+                summary.getVeterinarianName(),
+                summary.isActive()
         );
     }
 }

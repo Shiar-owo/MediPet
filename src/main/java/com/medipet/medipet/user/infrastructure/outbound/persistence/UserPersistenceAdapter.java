@@ -3,6 +3,7 @@ package com.medipet.medipet.user.infrastructure.outbound.persistence;
 import com.medipet.medipet.user.infrastructure.outbound.persistence.entity.UserEntity;
 import com.medipet.medipet.user.infrastructure.outbound.persistence.mapper.UserEntityMapper;
 import com.medipet.medipet.user.infrastructure.outbound.persistence.repository.UserJpaRepository;
+import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.port.outbound.UserRepository;
 import com.medipet.medipet.user.domain.valueobject.UserId;
@@ -50,6 +51,11 @@ class UserPersistenceAdapter implements UserRepository {
     @Override
     public Page<User> findAll(Pageable pageable) {
         return jpaRepository.findAll(pageable).map(UserEntityMapper::toDomain);
+    }
+
+    @Override
+    public Page<User> findByRole(Role role, Pageable pageable) {
+        return jpaRepository.findByRole(role.name(), pageable).map(UserEntityMapper::toDomain);
     }
 
     @Override

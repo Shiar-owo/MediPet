@@ -2,6 +2,7 @@ package com.medipet.medipet.user.application;
 
 import com.medipet.medipet.shared.dto.PageResponse;
 import com.medipet.medipet.shared.exception.NotFoundException;
+import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.port.inbound.UserQueryService;
 import com.medipet.medipet.user.domain.port.outbound.UserRepository;
@@ -38,6 +39,19 @@ class UserQueryServiceImpl implements UserQueryService {
     @Transactional(readOnly = true)
     public PageResponse<User> findAll(Pageable pageable) {
         Page<User> page = userRepository.findAll(pageable);
+        return new PageResponse<>(
+                page.getContent(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<User> findByRole(Role role, Pageable pageable) {
+        Page<User> page = userRepository.findByRole(role, pageable);
         return new PageResponse<>(
                 page.getContent(),
                 page.getNumber(),

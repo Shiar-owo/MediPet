@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -75,6 +76,20 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.content[0].email").value("user@example.com"));
+    }
+
+    @Test
+    void shouldGetVeterinarians() throws Exception {
+        String id = UUID.randomUUID().toString();
+        User vet = createTestUser(id, "vet@medipet.com");
+        PageResponse<User> page = new PageResponse<>(List.of(vet), 0, 20, 1, 1);
+
+        when(userQueryService.findByRole(eq(Role.VETERINARIO), any(PageRequest.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/users/veterinarians").param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content[0].email").value("vet@medipet.com"));
     }
 
     @Test

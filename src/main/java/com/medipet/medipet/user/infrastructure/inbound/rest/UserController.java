@@ -2,6 +2,7 @@ package com.medipet.medipet.user.infrastructure.inbound.rest;
 
 import com.medipet.medipet.shared.dto.ApiResponse;
 import com.medipet.medipet.shared.dto.PageResponse;
+import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.port.inbound.ActivateUserUseCase;
 import com.medipet.medipet.user.domain.port.inbound.DeactivateUserUseCase;
 import com.medipet.medipet.user.domain.port.inbound.UpdateUserUseCase;
@@ -52,6 +53,23 @@ class UserController {
                 users.getSize(),
                 users.getTotalElements(),
                 users.getTotalPages());
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/veterinarians")
+    @Operation(summary = "List veterinarians", description = "Returns a paginated list of all users with VETERINARIO role.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of veterinarians")
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getVeterinarians(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResponse<com.medipet.medipet.user.domain.model.User> vets =
+                userQueryService.findByRole(Role.VETERINARIO, PageRequest.of(page, size));
+        PageResponse<UserResponse> response = new PageResponse<>(
+                vets.getContent().stream().map(UserMapper::toResponse).toList(),
+                vets.getPage(),
+                vets.getSize(),
+                vets.getTotalElements(),
+                vets.getTotalPages());
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 

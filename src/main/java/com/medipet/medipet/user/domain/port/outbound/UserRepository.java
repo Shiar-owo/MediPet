@@ -1,5 +1,6 @@
 package com.medipet.medipet.user.domain.port.outbound;
 
+import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.valueobject.UserId;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,8 @@ public interface UserRepository {
     boolean existsByEmail(String email);
 
     Page<User> findAll(Pageable pageable);
+
+    Page<User> findByRole(Role role, Pageable pageable);
 
     void deleteById(UserId id);
 

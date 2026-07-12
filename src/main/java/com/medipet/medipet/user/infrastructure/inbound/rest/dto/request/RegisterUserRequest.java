@@ -35,9 +35,6 @@ public class RegisterUserRequest {
     @Schema(description = "Date of birth (ISO-8601)", example = "1990-01-15")
     private LocalDate dateOfBirth;
 
-    @Schema(description = "Avatar URL", example = "https://example.com/avatar.jpg")
-    private String avatar;
-
     @Schema(description = "User role", example = "VETERINARIO", allowableValues = {"ADMIN", "VETERINARIO", "RECEPCIONISTA"})
     private String role;
 }

@@ -2,6 +2,7 @@ package com.medipet.medipet.appointment.infrastructure.inbound.rest;
 
 import com.medipet.medipet.appointment.application.port.inbound.AppointmentQueryService;
 import com.medipet.medipet.appointment.application.port.inbound.CancelAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.CompleteAppointmentUseCase;
 import com.medipet.medipet.appointment.application.port.inbound.CreateAppointmentUseCase;
 import com.medipet.medipet.appointment.application.port.inbound.UpdateAppointmentUseCase;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
@@ -35,15 +36,18 @@ class AppointmentController {
     private final CreateAppointmentUseCase createAppointmentUseCase;
     private final UpdateAppointmentUseCase updateAppointmentUseCase;
     private final CancelAppointmentUseCase cancelAppointmentUseCase;
+    private final CompleteAppointmentUseCase completeAppointmentUseCase;
     private final AppointmentQueryService appointmentQueryService;
 
     AppointmentController(CreateAppointmentUseCase createAppointmentUseCase,
                           UpdateAppointmentUseCase updateAppointmentUseCase,
                           CancelAppointmentUseCase cancelAppointmentUseCase,
+                          CompleteAppointmentUseCase completeAppointmentUseCase,
                           AppointmentQueryService appointmentQueryService) {
         this.createAppointmentUseCase = createAppointmentUseCase;
         this.updateAppointmentUseCase = updateAppointmentUseCase;
         this.cancelAppointmentUseCase = cancelAppointmentUseCase;
+        this.completeAppointmentUseCase = completeAppointmentUseCase;
         this.appointmentQueryService = appointmentQueryService;
     }
 
@@ -111,6 +115,22 @@ class AppointmentController {
             @RequestBody(required = false) java.util.Map<String, String> body) {
         String cancelReason = body != null ? body.get("cancelReason") : null;
         var appointment = cancelAppointmentUseCase.execute(AppointmentId.from(id), cancelReason);
+
+        var summary = appointmentQueryService.findById(appointment.getId());
+        return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(summary)));
+    }
+
+    @PatchMapping("/{id}/complete")
+    @Operation(summary = "Mark an appointment as completed", description = "Sets the appointment status to COMPLETADA.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Appointment marked as completed"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Appointment already completed or cancelled", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Veterinarian can only complete own appointments", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Appointment not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
+    public ResponseEntity<ApiResponse<AppointmentResponse>> complete(@PathVariable String id) {
+        var appointment = completeAppointmentUseCase.execute(AppointmentId.from(id));
 
         var summary = appointmentQueryService.findById(appointment.getId());
         return ResponseEntity.ok(ApiResponse.ok(AppointmentMapper.toResponse(summary)));

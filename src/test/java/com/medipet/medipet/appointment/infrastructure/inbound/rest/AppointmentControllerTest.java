@@ -5,6 +5,7 @@ import com.medipet.medipet.appointment.domain.model.AppointmentStatus;
 import com.medipet.medipet.appointment.application.AppointmentSummary;
 import com.medipet.medipet.appointment.application.port.inbound.AppointmentQueryService;
 import com.medipet.medipet.appointment.application.port.inbound.CancelAppointmentUseCase;
+import com.medipet.medipet.appointment.application.port.inbound.CompleteAppointmentUseCase;
 import com.medipet.medipet.appointment.application.port.inbound.CreateAppointmentUseCase;
 import com.medipet.medipet.appointment.application.port.inbound.UpdateAppointmentUseCase;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
@@ -56,6 +57,9 @@ class AppointmentControllerTest {
 
     @MockitoBean
     private CancelAppointmentUseCase cancelAppointmentUseCase;
+
+    @MockitoBean
+    private CompleteAppointmentUseCase completeAppointmentUseCase;
 
     @MockitoBean
     private AppointmentQueryService appointmentQueryService;
@@ -208,6 +212,51 @@ class AppointmentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("CANCELADA"))
                 .andExpect(jsonPath("$.data.cancelReason").value("Client requested"));
+    }
+
+    @Test
+    void shouldCompleteAppointment() throws Exception {
+        String id = UUID.randomUUID().toString();
+        Appointment completed = Appointment.withId(AppointmentId.from(UUID.fromString(id)),
+                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                "Annual checkup", AppointmentStatus.COMPLETADA, null,
+                PetId.from(UUID.fromString(PET_ID)),
+                ClientId.from(UUID.fromString(CLIENT_ID)),
+                UserId.from(UUID.fromString(VET_ID)),
+                true);
+        AppointmentSummary summary = AppointmentSummary.from(completed, Map.of(), Map.of(), Map.of());
+
+        when(completeAppointmentUseCase.execute(AppointmentId.from(id)))
+                .thenReturn(completed);
+        when(appointmentQueryService.findById(completed.getId())).thenReturn(summary);
+
+        mockMvc.perform(patch("/api/appointments/{id}/complete", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("COMPLETADA"));
+    }
+
+    @Test
+    void shouldReturn400WhenCompletingAlreadyCompletedAppointment() throws Exception {
+        String id = UUID.randomUUID().toString();
+
+        when(completeAppointmentUseCase.execute(AppointmentId.from(id)))
+                .thenThrow(new com.medipet.medipet.shared.exception.BadRequestException("Appointment is already completed"));
+
+        mockMvc.perform(patch("/api/appointments/{id}/complete", id))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturn403WhenVetCompletesOtherVetAppointment() throws Exception {
+        String id = UUID.randomUUID().toString();
+
+        when(completeAppointmentUseCase.execute(AppointmentId.from(id)))
+                .thenThrow(new ForbiddenException("Veterinarians can only access their own appointments"));
+
+        mockMvc.perform(patch("/api/appointments/{id}/complete", id))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));
     }
 
     @Test

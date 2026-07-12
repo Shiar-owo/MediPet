@@ -41,7 +41,8 @@ public class User {
         this.lastLoginAt = lastLoginAt;
     }
 
-    public static User create(String email, String password, String firstName, String lastName, Role role) {
+    public static User create(String email, String password, String firstName, String lastName, Role role,
+                              String phone, String address, LocalDate dateOfBirth) {
         User user = new User();
         user.id = UserId.generate();
         user.email = email;
@@ -50,6 +51,9 @@ public class User {
         user.lastName = lastName;
         user.role = role;
         user.active = true;
+        user.phone = phone;
+        user.address = address;
+        user.dateOfBirth = dateOfBirth;
         return user;
     }
 

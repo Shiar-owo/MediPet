@@ -57,6 +57,8 @@ class AuthServiceImplTest {
 
         var result = authService.issueTokens("test@example.com");
 
+        assertEquals(user.getId().getValue().toString(), result.userId());
+        assertEquals("test@example.com", result.email());
         assertEquals("access-token", result.accessToken());
         assertEquals("refresh-token", result.refreshToken());
         assertNotNull(user.getLastLoginAt());
@@ -87,6 +89,8 @@ class AuthServiceImplTest {
 
         var result = authService.refreshToken("old-refresh");
 
+        assertEquals(user.getId().getValue().toString(), result.userId());
+        assertEquals("test@example.com", result.email());
         assertEquals("new-access", result.accessToken());
         assertEquals("new-refresh", result.refreshToken());
         verify(refreshTokenRepository).deleteByToken("old-refresh");

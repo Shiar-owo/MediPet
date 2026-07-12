@@ -12,6 +12,7 @@ import com.medipet.medipet.pet.infrastructure.inbound.rest.mapper.PetMapper;
 import com.medipet.medipet.shared.dto.ApiResponse;
 import com.medipet.medipet.shared.dto.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +42,13 @@ class PetController {
 
     @PostMapping
     @Operation(summary = "Register a new pet", description = "Registers a new pet for an existing client.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Pet created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Client not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Microchip or tattoo already registered", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<PetResponse>> create(@Valid @RequestBody PetRequest request) {
         var pet = createPetUseCase.execute(
                 request.getName(),
@@ -62,6 +70,13 @@ class PetController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a pet", description = "Updates pet fields. Only provided non-null fields are changed.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pet updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pet not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Microchip already registered", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<PetResponse>> update(
             @PathVariable String id,
             @Valid @RequestBody UpdatePetRequest request) {
@@ -83,6 +98,11 @@ class PetController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get pet by ID", description = "Returns a single pet by their UUID.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pet found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pet not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<PetResponse>> getById(@PathVariable String id) {
         var pet = petQueryService.findById(PetId.from(id));
         return ResponseEntity.ok(ApiResponse.ok(PetMapper.toResponse(pet)));
@@ -90,6 +110,11 @@ class PetController {
 
     @GetMapping("/microchip/{microchipId}")
     @Operation(summary = "Get pet by microchip", description = "Returns a single pet by their microchip ID.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pet found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pet not found", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Internal server error", content = @Content)
+    })
     public ResponseEntity<ApiResponse<PetResponse>> getByMicrochip(@PathVariable String microchipId) {
         return petQueryService.findByMicrochipId(microchipId)
                 .map(pet -> ResponseEntity.ok(ApiResponse.ok(PetMapper.toResponse(pet))))
@@ -98,6 +123,7 @@ class PetController {
 
     @GetMapping("/client/{clientId}")
     @Operation(summary = "List pets by client", description = "Returns paginated pets belonging to a specific client.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of pets")
     public ResponseEntity<ApiResponse<PageResponse<PetResponse>>> getByClientId(
             @PathVariable String clientId,
             @RequestParam(defaultValue = "0") int page,
@@ -114,6 +140,7 @@ class PetController {
 
     @GetMapping
     @Operation(summary = "List/search pets", description = "Returns a paginated list. Optional ?q= filters by name.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Paginated list of pets")
     public ResponseEntity<ApiResponse<PageResponse<PetResponse>>> getAll(
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,

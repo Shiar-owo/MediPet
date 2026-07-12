@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -72,5 +74,13 @@ class PetPersistenceAdapter implements PetRepository {
     @Override
     public boolean existsByTattooNumber(String tattooNumber) {
         return jpaRepository.existsByTattooNumber(tattooNumber);
+    }
+
+    @Override
+    public List<Pet> findAllById(Collection<PetId> ids) {
+        return jpaRepository.findAllById(ids.stream().map(PetId::getValue).toList())
+                .stream()
+                .map(PetEntityMapper::toDomain)
+                .toList();
     }
 }

@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -54,5 +56,13 @@ class ClientPersistenceAdapter implements ClientRepository {
     @Override
     public boolean existsByDni(String dni) {
         return jpaRepository.existsByDni(dni);
+    }
+
+    @Override
+    public List<Client> findAllById(Collection<ClientId> ids) {
+        return jpaRepository.findAllById(ids.stream().map(ClientId::getValue).toList())
+                .stream()
+                .map(ClientEntityMapper::toDomain)
+                .toList();
     }
 }

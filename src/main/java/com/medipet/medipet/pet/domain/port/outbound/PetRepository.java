@@ -6,6 +6,8 @@ import com.medipet.medipet.pet.domain.valueobject.PetId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface PetRepository {
@@ -27,4 +29,6 @@ public interface PetRepository {
     boolean existsByMicrochipId(String microchipId);
 
     boolean existsByTattooNumber(String tattooNumber);
+
+    List<Pet> findAllById(Collection<PetId> ids);
 }

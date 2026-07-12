@@ -21,7 +21,4 @@ public class UpdateUserRequest {
 
     @Schema(description = "Address", example = "Av. Corrientes 1234")
     private String address;
-
-    @Schema(description = "Avatar URL", example = "https://example.com/avatar.jpg")
-    private String avatar;
 }

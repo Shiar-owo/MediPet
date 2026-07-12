@@ -33,7 +33,7 @@ class UserPersistenceAdapterTest {
     @BeforeEach
     void setUp() {
         testUser = User.create("test@example.com", "hashed_password",
-                "John", "Doe", Role.VETERINARIO, null, null, null, null);
+                "John", "Doe", Role.VETERINARIO, null, null, null);
     }
 
     @Test
@@ -82,7 +82,7 @@ class UserPersistenceAdapterTest {
     void shouldFindAllPaginated() {
         for (int i = 0; i < 5; i++) {
             userRepository.save(User.create("user" + i + "@example.com", "pass",
-                    "User", "Number" + i, Role.RECEPCIONISTA, null, null, null, null));
+                    "User", "Number" + i, Role.RECEPCIONISTA, null, null, null));
         }
 
         Page<User> page = userRepository.findAll(PageRequest.of(0, 3));

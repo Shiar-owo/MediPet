@@ -38,7 +38,7 @@ class ChangePasswordUseCaseImplTest {
     @Test
     void shouldChangePasswordSuccessfully() {
         UserId userId = UserId.generate();
-        User user = User.create("test@example.com", "old_hashed", "John", "Doe", Role.VETERINARIO, null, null, null, null);
+        User user = User.create("test@example.com", "old_hashed", "John", "Doe", Role.VETERINARIO, null, null, null);
         User userWithId = User.withId(userId, user.getEmail(), user.getPassword(),
                 user.getFirstName(), user.getLastName(), user.getRole(), user.isActive(),
                 null, null, null, null, null);

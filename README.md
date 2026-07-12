@@ -12,16 +12,16 @@ Veterinary Clinic Management System — a modular monolith built with **hexagona
 | User/Auth | Complete | 56 passing | ✅ |
 | Client | Complete | 31 passing | ✅ |
 | Pet | Complete | 38 passing | ✅ |
-| Appointment | Pending | — | 🔲 |
+| Appointment | Complete | 37 passing | ✅ |
+| Photo upload (Cloudinary) | Complete | 10 passing | ✅ |
 | Clinical | Pending | — | 🔲 |
-| File upload | Pending | — | 🔲 |
 | Dashboard stats | Pending | — | 🔲 |
 | Frontend (React) | Not started | — | 🔲 |
-| Deploy (Render) | Not started | — | 🔲 |
+| Deploy (Render + Vercel) | Not started | — | 🔲 |
 
 ---
 
-## Architecture
+## Key Architectural Decisions
 
 ### Hexagonal Architecture (Ports & Adapters)
 
@@ -33,16 +33,16 @@ module/
 │   ├── model/              # Domain entities & value objects (pure Java)
 │   └── port/
 │       ├── inbound/        # Use case interfaces
-│       └── outbound/       # Persistence & security ports
+│       └── outbound/       # Persistence & external service ports
 ├── application/            # Use case implementations
 ├── infrastructure/
 │   ├── inbound/
 │   │   ├── rest/           # Controllers, DTOs, mappers
-│   │   ├── security/       # JWT filter
-│   │   └── config/         # SecurityConfig
+│   │   └── security/       # JWT filter, authorization adapters
 │   └── outbound/
 │       ├── persistence/    # JPA entities, repos, adapters, mappers
-│       └── security/       # JWT provider, BCrypt, UserDetailsService
+│       └── security/       # JWT provider, BCrypt
+└── config/                 # Module wiring
 ```
 
 ### Modular Monolith
@@ -51,11 +51,11 @@ All modules live under `com.medipet.medipet`:
 
 | Module | Responsibility |
 |--------|---------------|
-| `shared` | Cross-cutting: ApiResponse, exceptions, audit, CORS |
-| `user` | Auth, users, roles, JWT |
+| `shared` | Cross-cutting: ApiResponse, exceptions, GlobalExceptionHandler, audit, CORS, OpenAPI config, FileStoragePort |
+| `user` | Auth, users, roles, JWT (access + refresh tokens) |
 | `client` | Pet owners — CRUD, search by name/DNI |
-| `pet` | Pets — CRUD, search by name, microchip, owner |
-| `appointment` | Scheduling (planned) |
+| `pet` | Pets — CRUD, search by name/microchip/owner, photo upload |
+| `appointment` | Scheduling — CRUD, cancel, overlap prevention, role-based access |
 | `clinical` | Consultations (planned) |
 
 ### API Response Standard
@@ -73,15 +73,57 @@ All endpoints return a unified `ApiResponse<T>` wrapper:
 { "success": false, "error": { "status": 404, "code": "NOT_FOUND", "message": "...", "path": "/api/...", "timestamp": "..." } }
 ```
 
+### Role-Based Access Control
+
+Three roles defined in `Role` enum:
+
+| Role | Permissions |
+|------|------------|
+| `ADMIN` | Full access to all modules, user management |
+| `VETERINARIO` | Create/update/cancel own appointments only. Can view all appointments. |
+| `RECEPCIONISTA` | Full CRUD on clients, pets, and all appointments |
+
+### Appointment Authorization Rules
+
+Authorization is enforced in the **application layer** (use cases), not in the controller:
+
+- **Create**: Vets can only create appointments for themselves (`CreateAppointmentUseCaseImpl.resolveVetId()`)
+- **Update**: Vets can only update their own appointments (`UpdateAppointmentUseCaseImpl.enforceVeterinarianOwnership()`)
+- **Cancel**: Vets can only cancel their own appointments (`CancelAppointmentUseCaseImpl.enforceVeterinarianOwnership()`)
+- **View**: All roles can view any appointment (no read restrictions)
+- **Overlap prevention**: `POST` and `PUT` check for time overlaps per veterinarian (`findOverlapping` query)
+
+### Appointment Status Flow
+
+```
+PENDIENTE → CONFIRMADA → EN_ATENCION → COMPLETADA
+    ↓                                    ↑
+CANCELADA ←─────────────────────────────┘
+```
+
+Statuses: `PENDIENTE`, `CONFIRMADA`, `EN_ATENCION`, `COMPLETADA`, `CANCELADA`
+
+### Cloudinary Photo Upload
+
+Pet photos are stored in Cloudinary (not local filesystem):
+
+- **Port**: `FileStoragePort` (domain interface)
+- **Adapter**: `CloudinaryAdapter` (infrastructure)
+- **Config**: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` env vars
+- **Endpoint**: `POST /api/pets/{id}/photo` (multipart, max 5MB, JPEG/PNG/GIF/WebP)
+- **Accepted types**: `FileStorageAdapter` validates content type and size before upload
+
 ---
 
 ## Tech Stack
 
 - **Backend:** Spring Boot 4.0.7, Spring Security, Spring Data JPA, Hibernate
-- **Database:** PostgreSQL, Flyway migrations
-- **Auth:** JWT (jjwt 0.12.6), BCrypt, stateless sessions
+- **Database:** PostgreSQL 18, Flyway migrations (V1–V6)
+- **Auth:** JWT (jjwt 0.12.6), BCrypt, stateless sessions, refresh token rotation
+- **File storage:** Cloudinary (`cloudinary-core:2.3.0`, `cloudinary-http5:2.3.0`)
+- **API docs:** SpringDoc OpenAPI 3.0 (`/swagger-ui.html`)
 - **Testing:** JUnit 5, Mockito, Testcontainers, MockMvc
-- **CI/CD:** GitHub Actions
+- **CI/CD:** GitHub Actions (Testcontainers-native, includes Docker build step)
 - **Deploy:** Render (Web Service + PostgreSQL), Vercel (frontend)
 - **Frontend:** React + Vite (planned)
 
@@ -125,7 +167,26 @@ Seeded via Flyway migration (`V3__seed_admin.sql`):
 - **Email:** `admin@medipet.com`
 - **Password:** `admin123`
 
-Change the password on first login. The `POST /api/auth/register` endpoint is protected and requires `ADMIN` role — only the admin can create new user accounts.
+Change the password on first login. The `POST /api/auth/register` endpoint requires `ADMIN` role.
+
+### Required Environment Variables
+
+```bash
+# Database
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/medipet
+SPRING_DATASOURCE_USERNAME=medipet
+SPRING_DATASOURCE_PASSWORD=medipet
+
+# JWT
+JWT_SECRET=your-secret-key
+JWT_ACCESS_EXPIRATION=3600000    # 1 hour
+JWT_REFRESH_EXPIRATION=604800000 # 7 days
+
+# Cloudinary (for photo upload)
+CLOUDINARY_CLOUD_NAME=your-cloud
+CLOUDINARY_API_KEY=your-key
+CLOUDINARY_API_SECRET=your-secret
+```
 
 ---
 
@@ -135,7 +196,7 @@ Change the password on first login. The `POST /api/auth/register` endpoint is pr
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/api/auth/login` | Public | Login, returns access + refresh tokens |
+| POST | `/api/auth/login` | Public | Login, returns access + refresh tokens + role |
 | POST | `/api/auth/register` | ADMIN | Create new user |
 | POST | `/api/auth/refresh` | Public | Exchange refresh token for new pair |
 | POST | `/api/auth/logout` | Public | Invalidate refresh token |
@@ -170,6 +231,20 @@ Change the password on first login. The `POST /api/auth/register` endpoint is pr
 | GET | `/api/pets/microchip/{microchipId}` | Get pet by microchip |
 | GET | `/api/pets/client/{clientId}?page=&size=` | List pets by owner (paginated) |
 | GET | `/api/pets?q=&page=&size=` | List/search pets by name (paginated) |
+| POST | `/api/pets/{id}/photo` | Upload pet photo (multipart, max 5MB) |
+
+### Appointments (`/api/appointments`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/appointments` | Create appointment (201, overlap check) |
+| PUT | `/api/appointments/{id}` | Update appointment (re-checks overlap) |
+| PATCH | `/api/appointments/{id}/cancel` | Cancel appointment (with optional reason) |
+| GET | `/api/appointments/{id}` | Get appointment by ID |
+| GET | `/api/appointments/client/{clientId}?page=&size=` | List by client |
+| GET | `/api/appointments/pet/{petId}?page=&size=` | List by pet |
+| GET | `/api/appointments/veterinarian/{vetId}?page=&size=` | List by veterinarian |
+| GET | `/api/appointments?date=&page=&size=` | List all (optional date filter) |
 
 ---
 
@@ -177,23 +252,22 @@ Change the password on first login. The `POST /api/auth/register` endpoint is pr
 
 ```
 medipet/
-├── .github/workflows/      # CI/CD
-├── documentation/           # Requirements, plan, rubric
+├── .github/workflows/        # CI/CD (GitHub Actions)
+├── documentation/            # Requirements, plan, rubric
 ├── src/main/java/
 │   └── com/medipet/medipet/
-│       ├── shared/          # ApiResponse, exceptions, audit, CORS
-│       ├── user/            # Auth & user management
-│       ├── client/          # Client CRUD & search
-│       ├── pet/             # Pet CRUD & search
-│       ├── appointment/     # (planned)
-│       └── clinical/        # (planned)
+│       ├── shared/           # ApiResponse, exceptions, audit, CORS, OpenAPI, FileStoragePort
+│       ├── user/             # Auth & user management (roles: ADMIN, VETERINARIO, RECEPCIONISTA)
+│       ├── client/           # Client CRUD & search
+│       ├── pet/              # Pet CRUD & search, photo upload
+│       ├── appointment/      # Scheduling, overlap prevention, role-based access
+│       └── clinical/         # (planned)
 ├── src/main/resources/
-│   ├── application.yaml
-│   ├── application-dev.yaml
-│   └── db/migration/        # V1–V5 (users, refresh_tokens, admin seed, clients, pets)
-├── src/test/                # 126 tests (unit + integration + context)
+│   ├── application.yaml      # Config (Cloudinary, JWT, Swagger)
+│   └── db/migration/         # V1–V6 (users, tokens, admin, clients, pets, appointments)
+├── src/test/                 # 192 tests (unit + integration + context)
 ├── compose.yaml
-├── Dockerfile
+├── Dockerfile                # Multi-stage build (Maven → JRE)
 └── pom.xml
 ```
 
@@ -212,33 +286,17 @@ medipet/
 ./mvnw test -Dtest=AuthControllerTest#shouldLoginSuccessfully
 ```
 
-**Test coverage:**
+**Test coverage (192 tests):**
 
-| Test class | Type | Tests |
-|------------|------|-------|
-| CreateUserUseCaseImplTest | Unit | 2 |
-| ChangePasswordUseCaseImplTest | Unit | 3 |
-| AuthServiceImplTest | Unit | 6 |
-| JwtTokenProviderTest | Unit | 7 |
-| SecurityUserDetailsServiceTest | Unit | 3 |
-| BcryptPasswordAdapterTest | Unit | 4 |
-| JwtAuthenticationFilterTest | Unit | 5 |
-| AuthControllerTest | WebMvc | 5 |
-| UserControllerTest | WebMvc | 6 |
-| UserPersistenceAdapterTest | Integration | 8 |
-| RefreshTokenPersistenceAdapterTest | Integration | 6 |
-| CreateClientUseCaseImplTest | Unit | 2 |
-| UpdateClientUseCaseImplTest | Unit | 3 |
-| ClientQueryServiceImplTest | Unit | 7 |
-| ClientPersistenceAdapterTest | Integration | 7 |
-| ClientControllerTest | WebMvc | 12 |
-| CreatePetUseCaseImplTest | Unit | 3 |
-| UpdatePetUseCaseImplTest | Unit | 5 |
-| PetQueryServiceImplTest | Unit | 8 |
-| PetPersistenceAdapterTest | Integration | 9 |
-| PetControllerTest | WebMvc | 14 |
-| MedipetApplicationTests | Context | 1 |
-| **Total** | | **126** |
+| Module | Test classes | Tests |
+|--------|-------------|-------|
+| User/Auth | 8 classes | 56 |
+| Client | 5 classes | 31 |
+| Pet | 5 classes | 38 |
+| Appointment | 7 classes | 37 |
+| Photo upload | 1 class | 10 |
+| Context | 1 class | 1 |
+| **Total** | **27 classes** | **192** |
 
 ---
 
@@ -246,12 +304,14 @@ medipet/
 
 ### Backend (Render)
 
-The `Dockerfile` uses a multi-stage build (Maven build → JRE runtime). Deploy as a Render Web Service.
+The `Dockerfile` uses a multi-stage build (Maven build → JRE runtime). Deploy as a Render Web Service with a Managed PostgreSQL instance.
 
 ### Frontend (Vercel)
 
 React SPA served as a static site. API base URL configured via `VITE_API_URL` environment variable.
 
-### Database (Render PostgreSQL)
+### CI/CD (GitHub Actions)
 
-Managed PostgreSQL instance. Connection string wired as env vars to the backend.
+- Testcontainers-native pipeline (no external Postgres service needed)
+- Includes Docker build verification step
+- Runs on every push and PR to `main`

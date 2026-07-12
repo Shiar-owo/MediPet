@@ -9,6 +9,9 @@ import lombok.Getter;
 @Schema(description = "Login response with JWT tokens")
 public class LoginResponse {
 
+    @Schema(description = "User ID", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+    private String userId;
+
     @Schema(description = "JWT access token", example = "eyJhbGciOiJIUzI1NiJ9...")
     private String accessToken;
 

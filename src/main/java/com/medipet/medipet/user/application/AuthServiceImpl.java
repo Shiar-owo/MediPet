@@ -51,7 +51,7 @@ class AuthServiceImpl implements AuthService {
         );
         refreshTokenRepository.save(refreshToken);
 
-        return new LoginResult(accessToken, refreshTokenValue, user.getRole().name());
+        return new LoginResult(user.getId().getValue().toString(), user.getEmail(), accessToken, refreshTokenValue, user.getRole().name());
     }
 
     @Override
@@ -85,7 +85,7 @@ class AuthServiceImpl implements AuthService {
         );
         refreshTokenRepository.save(newRefreshToken);
 
-        return new LoginResult(newAccessToken, newRefreshTokenValue, user.getRole().name());
+        return new LoginResult(user.getId().getValue().toString(), user.getEmail(), newAccessToken, newRefreshTokenValue, user.getRole().name());
     }
 
     @Override

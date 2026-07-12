@@ -35,6 +35,7 @@ class DevSecurityConfig {
                 .requestMatchers(POST, "/api/auth/refresh").permitAll()
                 .requestMatchers(POST, "/api/auth/logout").permitAll()
                 .requestMatchers(POST, "/api/auth/register").hasRole("ADMIN")
+                .requestMatchers(GET, "/api/users/veterinarians").hasAnyRole("ADMIN", "RECEPCIONISTA")
                 .requestMatchers(GET, "/api/users").hasRole("ADMIN")
                 .requestMatchers(GET, "/api/users/**").hasRole("ADMIN")
                 .requestMatchers(PUT, "/api/users/**").hasRole("ADMIN")

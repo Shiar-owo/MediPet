@@ -2,12 +2,14 @@ package com.medipet.medipet.user.infrastructure.inbound.rest;
 
 import com.medipet.medipet.shared.dto.PageResponse;
 import com.medipet.medipet.shared.exception.NotFoundException;
+import com.medipet.medipet.shared.port.outbound.FileStoragePort;
 import com.medipet.medipet.user.domain.model.Role;
 import com.medipet.medipet.user.domain.model.User;
 import com.medipet.medipet.user.domain.port.inbound.ActivateUserUseCase;
 import com.medipet.medipet.user.domain.port.inbound.DeactivateUserUseCase;
 import com.medipet.medipet.user.domain.port.inbound.UpdateUserUseCase;
 import com.medipet.medipet.user.domain.port.inbound.UserQueryService;
+import com.medipet.medipet.user.domain.port.outbound.UserRepository;
 import com.medipet.medipet.user.domain.port.outbound.TokenProvider;
 import com.medipet.medipet.user.domain.valueobject.UserId;
 import com.medipet.medipet.user.infrastructure.inbound.security.JwtAuthenticationFilter;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -47,6 +50,12 @@ class UserControllerTest {
 
     @MockitoBean
     private DeactivateUserUseCase deactivateUserUseCase;
+
+    @MockitoBean
+    private FileStoragePort fileStoragePort;
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     @MockitoBean
     private TokenProvider tokenProvider;
@@ -75,6 +84,20 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.content[0].email").value("user@example.com"));
+    }
+
+    @Test
+    void shouldGetVeterinarians() throws Exception {
+        String id = UUID.randomUUID().toString();
+        User vet = createTestUser(id, "vet@medipet.com");
+        PageResponse<User> page = new PageResponse<>(List.of(vet), 0, 20, 1, 1);
+
+        when(userQueryService.findByRole(eq(Role.VETERINARIO), any(PageRequest.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/users/veterinarians").param("page", "0").param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content[0].email").value("vet@medipet.com"));
     }
 
     @Test

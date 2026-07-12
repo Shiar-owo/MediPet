@@ -43,7 +43,7 @@ class CreateUserUseCaseImplTest {
         });
 
         User result = createUserUseCase.execute("test@example.com", "password123",
-                "John", "Doe", Role.VETERINARIO);
+                "John", "Doe", Role.VETERINARIO, "+549115551234", "Av. Corrientes 1234", null);
 
         assertNotNull(result);
         assertEquals("test@example.com", result.getEmail());
@@ -60,7 +60,7 @@ class CreateUserUseCaseImplTest {
 
         assertThrows(ConflictException.class, () ->
                 createUserUseCase.execute("existing@example.com", "password123",
-                        "John", "Doe", Role.RECEPCIONISTA));
+                        "John", "Doe", Role.RECEPCIONISTA, null, null, null));
 
         verify(userRepository).existsByEmail("existing@example.com");
         verify(passwordEncoder, never()).encode(anyString());

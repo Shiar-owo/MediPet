@@ -8,14 +8,13 @@ Veterinary Clinic Management System — a modular monolith built with **hexagona
 
 | Module | Backend | Tests | Status |
 |--------|---------|-------|--------|
-| Shared infrastructure | Complete | — | ✅ |
+| Shared infrastructure | Complete | 6 passing | ✅ |
 | User/Auth | Complete | 56 passing | ✅ |
 | Client | Complete | 31 passing | ✅ |
-| Pet | Complete | 38 passing | ✅ |
-| Appointment | Complete | 37 passing | ✅ |
-| Photo upload (Cloudinary) | Complete | 10 passing | ✅ |
-| Clinical | Pending | — | 🔲 |
-| Dashboard stats | Pending | — | 🔲 |
+| Pet (+ photo upload) | Complete | 42 passing | ✅ |
+| Appointment | Complete | 68 passing | ✅ |
+| Clinical | Complete | 16 passing | ✅ |
+| Dashboard | Complete | 7 passing | ✅ |
 | Frontend (React) | Not started | — | 🔲 |
 | Deploy (Render + Vercel) | Not started | — | 🔲 |
 
@@ -56,7 +55,8 @@ All modules live under `com.medipet.medipet`:
 | `client` | Pet owners — CRUD, search by name/DNI |
 | `pet` | Pets — CRUD, search by name/microchip/owner, photo upload |
 | `appointment` | Scheduling — CRUD, cancel, overlap prevention, role-based access |
-| `clinical` | Consultations (planned) |
+| `clinical` | Medical consultations — create linked to completed appointments, vitals, diagnosis, treatment, pet history |
+| `dashboard` | Dashboard stats — client/pet/appointment counts, upcoming appointments |
 
 ### API Response Standard
 
@@ -118,7 +118,7 @@ Pet photos are stored in Cloudinary (not local filesystem):
 ## Tech Stack
 
 - **Backend:** Spring Boot 4.0.7, Spring Security, Spring Data JPA, Hibernate
-- **Database:** PostgreSQL 18, Flyway migrations (V1–V6)
+- **Database:** PostgreSQL 18, Flyway migrations (V1–V7)
 - **Auth:** JWT (jjwt 0.12.6), BCrypt, stateless sessions, refresh token rotation
 - **File storage:** Cloudinary (`cloudinary-core:2.3.0`, `cloudinary-http5:2.3.0`)
 - **API docs:** SpringDoc OpenAPI 3.0 (`/swagger-ui.html`)
@@ -168,6 +168,14 @@ Seeded via Flyway migration (`V3__seed_admin.sql`):
 - **Password:** `admin123`
 
 Change the password on first login. The `POST /api/auth/register` endpoint requires `ADMIN` role.
+
+**Why Flyway seed instead of @PostConstruct or public registration?**
+
+- **No public registration**: The only way to create users is `POST /api/auth/register` which requires ADMIN role. This prevents unauthorized user creation.
+- **Bootstrap problem**: You need at least one ADMIN user to create others via the API. The V3 seed solves this chicken-and-egg problem.
+- **Reproducibility**: Every environment (local, CI, staging, production) gets the same admin user on first migration run. No manual setup needed.
+- **No runtime overhead**: Unlike `@PostConstruct` which runs on every app startup checking if the admin exists, Flyway runs the seed exactly once at database creation time.
+- **Database-first**: The admin user is part of the database schema, not application code. This follows the infrastructure-as-data principle and keeps application code stateless.
 
 ### Required Environment Variables
 
@@ -233,6 +241,21 @@ CLOUDINARY_API_SECRET=your-secret
 | GET | `/api/pets?q=&page=&size=` | List/search pets by name (paginated) |
 | POST | `/api/pets/{id}/photo` | Upload pet photo (multipart, max 5MB) |
 
+### Consultations (`/api/consultations`) — VETERINARIO create, all roles view
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/consultations` | Create consultation from completed appointment (201) |
+| GET | `/api/consultations/{id}` | Get consultation by ID |
+| GET | `/api/consultations/appointment/{appointmentId}` | Get consultation by appointment |
+| GET | `/api/consultations/pet/{petId}?page=&size=` | Get consultation history by pet (paginated) |
+
+### Dashboard (`/api/dashboard`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/dashboard/stats` | System-wide stats (totals + upcoming appointments) |
+
 ### Appointments (`/api/appointments`)
 
 | Method | Endpoint | Description |
@@ -261,11 +284,12 @@ medipet/
 │       ├── client/           # Client CRUD & search
 │       ├── pet/              # Pet CRUD & search, photo upload
 │       ├── appointment/      # Scheduling, overlap prevention, role-based access
-│       └── clinical/         # (planned)
+│       ├── clinical/         # Medical consultations (vitals, diagnosis, treatment, pet history)
+│       └── dashboard/        # Dashboard stats (totals + upcoming appointments)
 ├── src/main/resources/
 │   ├── application.yaml      # Config (Cloudinary, JWT, Swagger)
-│   └── db/migration/         # V1–V6 (users, tokens, admin, clients, pets, appointments)
-├── src/test/                 # 192 tests (unit + integration + context)
+│   └── db/migration/         # V1–V7 (users, tokens, admin, clients, pets, appointments, consultations)
+├── src/test/                 # 228 tests (unit + integration + context)
 ├── compose.yaml
 ├── Dockerfile                # Multi-stage build (Maven → JRE)
 └── pom.xml
@@ -286,17 +310,20 @@ medipet/
 ./mvnw test -Dtest=AuthControllerTest#shouldLoginSuccessfully
 ```
 
-**Test coverage (192 tests):**
+**Test coverage (228 tests):**
 
 | Module | Test classes | Tests |
 |--------|-------------|-------|
 | User/Auth | 8 classes | 56 |
 | Client | 5 classes | 31 |
 | Pet | 5 classes | 38 |
-| Appointment | 7 classes | 37 |
-| Photo upload | 1 class | 10 |
+| Photo upload | 1 class | 4 |
+| Appointment | 8 classes | 68 |
+| Clinical | 4 classes | 16 |
+| Dashboard | 2 classes | 7 |
+| Shared | 2 classes | 6 |
 | Context | 1 class | 1 |
-| **Total** | **27 classes** | **192** |
+| **Total** | **36 classes** | **228** |
 
 ---
 

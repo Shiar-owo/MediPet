@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -53,5 +55,13 @@ class UserPersistenceAdapter implements UserRepository {
     @Override
     public void deleteById(UserId id) {
         jpaRepository.deleteById(id.getValue());
+    }
+
+    @Override
+    public List<User> findAllById(Collection<UserId> ids) {
+        return jpaRepository.findAllById(ids.stream().map(UserId::getValue).toList())
+                .stream()
+                .map(UserEntityMapper::toDomain)
+                .toList();
     }
 }

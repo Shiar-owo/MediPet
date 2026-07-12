@@ -5,6 +5,8 @@ import com.medipet.medipet.client.domain.valueobject.ClientId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface ClientRepository {
@@ -20,4 +22,6 @@ public interface ClientRepository {
     Page<Client> findAll(Pageable pageable);
 
     boolean existsByDni(String dni);
+
+    List<Client> findAllById(Collection<ClientId> ids);
 }

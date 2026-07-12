@@ -42,7 +42,7 @@ public class User {
     }
 
     public static User create(String email, String password, String firstName, String lastName, Role role,
-                              String phone, String address, LocalDate dateOfBirth, String avatar) {
+                              String phone, String address, LocalDate dateOfBirth) {
         User user = new User();
         user.id = UserId.generate();
         user.email = email;
@@ -54,7 +54,6 @@ public class User {
         user.phone = phone;
         user.address = address;
         user.dateOfBirth = dateOfBirth;
-        user.avatar = avatar;
         return user;
     }
 

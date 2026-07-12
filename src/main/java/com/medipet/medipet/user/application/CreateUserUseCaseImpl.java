@@ -25,13 +25,13 @@ class CreateUserUseCaseImpl implements CreateUserUseCase {
     @Override
     @Transactional
     public User execute(String email, String password, String firstName, String lastName, Role role,
-                        String phone, String address, LocalDate dateOfBirth, String avatar) {
+                        String phone, String address, LocalDate dateOfBirth) {
         if (userRepository.existsByEmail(email)) {
             throw new ConflictException("Email already in use: " + email);
         }
 
         User user = User.create(email, passwordEncoder.encode(password), firstName, lastName, role,
-                phone, address, dateOfBirth, avatar);
+                phone, address, dateOfBirth);
         return userRepository.save(user);
     }
 }

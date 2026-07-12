@@ -8,5 +8,5 @@ import java.time.LocalDate;
 public interface CreateUserUseCase {
 
     User execute(String email, String password, String firstName, String lastName, Role role,
-                 String phone, String address, LocalDate dateOfBirth, String avatar);
+                 String phone, String address, LocalDate dateOfBirth);
 }

@@ -62,8 +62,7 @@ class AuthController {
                 role,
                 request.getPhone(),
                 request.getAddress(),
-                request.getDateOfBirth(),
-                request.getAvatar());
+                request.getDateOfBirth());
 
         var response = UserMapper.toResponse(user);
         URI location = URI.create("/api/users/" + response.getId());

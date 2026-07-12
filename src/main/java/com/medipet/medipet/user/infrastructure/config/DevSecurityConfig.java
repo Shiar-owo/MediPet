@@ -40,6 +40,8 @@ class DevSecurityConfig {
                 .requestMatchers(GET, "/api/users/**").hasRole("ADMIN")
                 .requestMatchers(PUT, "/api/users/**").hasRole("ADMIN")
                 .requestMatchers(PATCH, "/api/users/**").hasRole("ADMIN")
+                .requestMatchers(POST, "/api/consultations").hasRole("VETERINARIO")
+                .requestMatchers(GET, "/api/consultations/**").authenticated()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authProvider)

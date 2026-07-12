@@ -49,6 +49,10 @@ class CreateAppointmentUseCaseImpl implements CreateAppointmentUseCase {
                                UserId veterinarianId) {
         UserId resolvedVetId = resolveVetId(veterinarianId);
 
+        if (date.isBefore(LocalDate.now())) {
+            throw new BadRequestException("Appointment date cannot be in the past");
+        }
+
         if (!petRepository.findById(petId).isPresent()) {
             throw new NotFoundException("Pet", petId.getValue());
         }

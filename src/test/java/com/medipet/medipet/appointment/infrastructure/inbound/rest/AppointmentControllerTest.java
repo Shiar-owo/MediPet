@@ -80,7 +80,7 @@ class AppointmentControllerTest {
 
     private Appointment createTestAppointment(String id) {
         return Appointment.withId(AppointmentId.from(UUID.fromString(id)),
-                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup", AppointmentStatus.PENDIENTE, null,
                 PetId.from(UUID.fromString(PET_ID)),
                 ClientId.from(UUID.fromString(CLIENT_ID)),
@@ -101,7 +101,7 @@ class AppointmentControllerTest {
         AppointmentSummary summary = createTestSummary(id);
 
         when(createAppointmentUseCase.execute(
-                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup",
                 PetId.from(PET_ID),
                 ClientId.from(CLIENT_ID),
@@ -112,12 +112,12 @@ class AppointmentControllerTest {
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
+                                {"date":"2027-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
                                 """.formatted(PET_ID, CLIENT_ID, VET_ID)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", startsWith("/api/appointments/")))
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.date").value("2026-07-10"))
+                .andExpect(jsonPath("$.data.date").value("2027-07-10"))
                 .andExpect(jsonPath("$.data.startTime").value("09:00"))
                 .andExpect(jsonPath("$.data.status").value("PENDIENTE"));
     }
@@ -125,7 +125,7 @@ class AppointmentControllerTest {
     @Test
     void shouldReturn409WhenOverlapExists() throws Exception {
         when(createAppointmentUseCase.execute(
-                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup",
                 PetId.from(PET_ID),
                 ClientId.from(CLIENT_ID),
@@ -135,7 +135,7 @@ class AppointmentControllerTest {
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
+                                {"date":"2027-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
                                 """.formatted(PET_ID, CLIENT_ID, VET_ID)))
                 .andExpect(status().isConflict());
     }
@@ -191,7 +191,7 @@ class AppointmentControllerTest {
     void shouldCancelAppointment() throws Exception {
         String id = UUID.randomUUID().toString();
         Appointment cancelled = Appointment.withId(AppointmentId.from(UUID.fromString(id)),
-                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup", AppointmentStatus.CANCELADA, "Client requested",
                 PetId.from(UUID.fromString(PET_ID)),
                 ClientId.from(UUID.fromString(CLIENT_ID)),
@@ -218,7 +218,7 @@ class AppointmentControllerTest {
     void shouldCompleteAppointment() throws Exception {
         String id = UUID.randomUUID().toString();
         Appointment completed = Appointment.withId(AppointmentId.from(UUID.fromString(id)),
-                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup", AppointmentStatus.COMPLETADA, null,
                 PetId.from(UUID.fromString(PET_ID)),
                 ClientId.from(UUID.fromString(CLIENT_ID)),
@@ -269,7 +269,7 @@ class AppointmentControllerTest {
         mockMvc.perform(get("/api/appointments/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.date").value("2026-07-10"))
+                .andExpect(jsonPath("$.data.date").value("2027-07-10"))
                 .andExpect(jsonPath("$.data.reason").value("Annual checkup"));
     }
 
@@ -294,15 +294,15 @@ class AppointmentControllerTest {
         mockMvc.perform(get("/api/appointments").param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.content[0].date").value("2026-07-10"));
+                .andExpect(jsonPath("$.data.content[0].date").value("2027-07-10"));
     }
 
     @Test
-    void shouldRejectCreateWithBlankDate() throws Exception {
+    void shouldRejectCreateWithPastDate() throws Exception {
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"","startTime":"09:00","endTime":"10:00","petId":"%s","clientId":"%s","veterinarianId":"%s"}
+                                {"date":"2020-01-01","startTime":"09:00","endTime":"10:00","petId":"%s","clientId":"%s","veterinarianId":"%s"}
                                 """.formatted(PET_ID, CLIENT_ID, VET_ID)))
                 .andExpect(status().isBadRequest());
     }
@@ -312,7 +312,7 @@ class AppointmentControllerTest {
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","petId":"","clientId":"%s","veterinarianId":"%s"}
+                                {"date":"2027-07-10","startTime":"09:00","endTime":"10:00","petId":"","clientId":"%s","veterinarianId":"%s"}
                                 """.formatted(CLIENT_ID, VET_ID)))
                 .andExpect(status().isBadRequest());
     }
@@ -333,7 +333,7 @@ class AppointmentControllerTest {
                         .param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.content[0].date").value("2026-07-10"));
+                .andExpect(jsonPath("$.data.content[0].date").value("2027-07-10"));
     }
 
     // ========== Use case exception tests (auth enforced in use cases) ==========
@@ -341,7 +341,7 @@ class AppointmentControllerTest {
     @Test
     void shouldReturn403WhenVetCreatesForOtherVet() throws Exception {
         when(createAppointmentUseCase.execute(
-                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup",
                 PetId.from(PET_ID),
                 ClientId.from(CLIENT_ID),
@@ -351,7 +351,7 @@ class AppointmentControllerTest {
         mockMvc.perform(post("/api/appointments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"date":"2026-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
+                                {"date":"2027-07-10","startTime":"09:00","endTime":"10:00","reason":"Annual checkup","petId":"%s","clientId":"%s","veterinarianId":"%s"}
                                 """.formatted(PET_ID, CLIENT_ID, OTHER_VET_ID)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("FORBIDDEN"));

@@ -1,16 +1,19 @@
 package com.medipet.medipet.appointment.infrastructure.inbound.rest.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
+
+import java.time.LocalDate;
 
 @Getter
 @Schema(description = "Appointment creation request")
 public class AppointmentRequest {
 
-    @NotBlank
+    @FutureOrPresent
     @Schema(description = "Appointment date (ISO-8601)", example = "2026-07-10")
-    private String date;
+    private LocalDate date;
 
     @NotBlank
     @Schema(description = "Start time (HH:mm)", example = "09:00")

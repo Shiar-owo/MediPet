@@ -63,7 +63,7 @@ class AppointmentController {
     })
     public ResponseEntity<ApiResponse<AppointmentResponse>> create(@Valid @RequestBody AppointmentRequest request) {
         var appointment = createAppointmentUseCase.execute(
-                LocalDate.parse(request.getDate()),
+                request.getDate(),
                 LocalTime.parse(request.getStartTime()),
                 LocalTime.parse(request.getEndTime()),
                 request.getReason(),

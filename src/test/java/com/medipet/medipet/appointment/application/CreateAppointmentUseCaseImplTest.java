@@ -76,16 +76,16 @@ class CreateAppointmentUseCaseImplTest {
                 User.withId(vetId, "vet@medipet.com", "pass", "Dr. Juan", "Lopez",
                         com.medipet.medipet.user.domain.model.Role.VETERINARIO, true,
                         null, null, null, null, null)));
-        when(appointmentRepository.findOverlapping(vetId, LocalDate.of(2026, 7, 10),
+        when(appointmentRepository.findOverlapping(vetId, LocalDate.of(2027, 7, 10),
                 LocalTime.of(9, 0), LocalTime.of(10, 0))).thenReturn(Collections.emptyList());
         when(appointmentRepository.save(any(Appointment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Appointment result = createAppointmentUseCase.execute(
-                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup", petId, clientId, vetId);
 
         assertNotNull(result);
-        assertEquals(LocalDate.of(2026, 7, 10), result.getDate());
+        assertEquals(LocalDate.of(2027, 7, 10), result.getDate());
         assertEquals(LocalTime.of(9, 0), result.getStartTime());
         assertEquals(LocalTime.of(10, 0), result.getEndTime());
         assertEquals("Annual checkup", result.getReason());
@@ -102,7 +102,7 @@ class CreateAppointmentUseCaseImplTest {
 
         assertThrows(NotFoundException.class, () ->
                 createAppointmentUseCase.execute(
-                        LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                        LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                         "Annual checkup", petId, clientId, vetId));
 
         verify(appointmentRepository, never()).save(any());
@@ -121,7 +121,7 @@ class CreateAppointmentUseCaseImplTest {
 
         assertThrows(NotFoundException.class, () ->
                 createAppointmentUseCase.execute(
-                        LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                        LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                         "Annual checkup", petId, clientId, vetId));
 
         verify(appointmentRepository, never()).save(any());
@@ -140,14 +140,14 @@ class CreateAppointmentUseCaseImplTest {
                 User.withId(vetId, "vet@medipet.com", "pass", "Dr. Juan", "Lopez",
                         com.medipet.medipet.user.domain.model.Role.VETERINARIO, true,
                         null, null, null, null, null)));
-        Appointment overlapping = Appointment.create(LocalDate.of(2026, 7, 10),
+        Appointment overlapping = Appointment.create(LocalDate.of(2027, 7, 10),
                 LocalTime.of(9, 30), LocalTime.of(10, 30), "Other", petId, clientId, vetId);
-        when(appointmentRepository.findOverlapping(vetId, LocalDate.of(2026, 7, 10),
+        when(appointmentRepository.findOverlapping(vetId, LocalDate.of(2027, 7, 10),
                 LocalTime.of(9, 0), LocalTime.of(10, 0))).thenReturn(List.of(overlapping));
 
         assertThrows(ConflictException.class, () ->
                 createAppointmentUseCase.execute(
-                        LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                        LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                         "Annual checkup", petId, clientId, vetId));
 
         verify(appointmentRepository, never()).save(any());
@@ -169,7 +169,19 @@ class CreateAppointmentUseCaseImplTest {
 
         assertThrows(BadRequestException.class, () ->
                 createAppointmentUseCase.execute(
-                        LocalDate.of(2026, 7, 10), LocalTime.of(10, 0), LocalTime.of(9, 0),
+                        LocalDate.of(2027, 7, 10), LocalTime.of(10, 0), LocalTime.of(9, 0),
+                        "Annual checkup", petId, clientId, vetId));
+
+        verify(appointmentRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowBadRequestWhenDateIsPast() {
+        when(authorizationPort.getCurrentUserRole()).thenReturn(Role.ADMIN);
+
+        assertThrows(BadRequestException.class, () ->
+                createAppointmentUseCase.execute(
+                        LocalDate.of(2020, 1, 1), LocalTime.of(9, 0), LocalTime.of(10, 0),
                         "Annual checkup", petId, clientId, vetId));
 
         verify(appointmentRepository, never()).save(any());
@@ -183,7 +195,7 @@ class CreateAppointmentUseCaseImplTest {
 
         assertThrows(ForbiddenException.class, () ->
                 createAppointmentUseCase.execute(
-                        LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                        LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                         "Annual checkup", petId, clientId, otherVetId));
 
         verify(appointmentRepository, never()).save(any());
@@ -203,12 +215,12 @@ class CreateAppointmentUseCaseImplTest {
                 User.withId(vetId, "vet@medipet.com", "pass", "Dr. Juan", "Lopez",
                         com.medipet.medipet.user.domain.model.Role.VETERINARIO, true,
                         null, null, null, null, null)));
-        when(appointmentRepository.findOverlapping(vetId, LocalDate.of(2026, 7, 10),
+        when(appointmentRepository.findOverlapping(vetId, LocalDate.of(2027, 7, 10),
                 LocalTime.of(9, 0), LocalTime.of(10, 0))).thenReturn(Collections.emptyList());
         when(appointmentRepository.save(any(Appointment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Appointment result = createAppointmentUseCase.execute(
-                LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
+                LocalDate.of(2027, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup", petId, clientId, vetId);
 
         assertNotNull(result);

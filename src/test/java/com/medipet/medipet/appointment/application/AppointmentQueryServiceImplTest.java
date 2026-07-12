@@ -2,7 +2,11 @@ package com.medipet.medipet.appointment.application;
 
 import com.medipet.medipet.appointment.domain.model.Appointment;
 import com.medipet.medipet.appointment.domain.model.AppointmentStatus;
+import com.medipet.medipet.appointment.application.AppointmentSummary;
 import com.medipet.medipet.appointment.domain.port.outbound.AppointmentRepository;
+import com.medipet.medipet.appointment.domain.port.outbound.ClientNameResolverPort;
+import com.medipet.medipet.appointment.domain.port.outbound.PetNameResolverPort;
+import com.medipet.medipet.appointment.domain.port.outbound.VeterinarianNameResolverPort;
 import com.medipet.medipet.appointment.domain.valueobject.AppointmentId;
 import com.medipet.medipet.client.domain.valueobject.ClientId;
 import com.medipet.medipet.pet.domain.valueobject.PetId;
@@ -21,9 +25,11 @@ import org.springframework.data.domain.PageRequest;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,6 +37,15 @@ class AppointmentQueryServiceImplTest {
 
     @Mock
     private AppointmentRepository appointmentRepository;
+
+    @Mock
+    private PetNameResolverPort petNameResolver;
+
+    @Mock
+    private ClientNameResolverPort clientNameResolver;
+
+    @Mock
+    private VeterinarianNameResolverPort vetNameResolver;
 
     private AppointmentQueryServiceImpl appointmentQueryService;
 
@@ -42,7 +57,8 @@ class AppointmentQueryServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        appointmentQueryService = new AppointmentQueryServiceImpl(appointmentRepository);
+        appointmentQueryService = new AppointmentQueryServiceImpl(
+                appointmentRepository, petNameResolver, clientNameResolver, vetNameResolver);
         appointmentId = AppointmentId.generate();
         clientId = ClientId.generate();
         petId = PetId.generate();
@@ -51,13 +67,17 @@ class AppointmentQueryServiceImplTest {
                 LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(10, 0),
                 "Annual checkup", AppointmentStatus.PENDIENTE, null,
                 petId, clientId, vetId, true);
+
+        lenient().when(petNameResolver.resolveNames(any())).thenReturn(Map.of());
+        lenient().when(clientNameResolver.resolveNames(any())).thenReturn(Map.of());
+        lenient().when(vetNameResolver.resolveNames(any())).thenReturn(Map.of());
     }
 
     @Test
     void shouldFindById() {
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(testAppointment));
 
-        Appointment result = appointmentQueryService.findById(appointmentId);
+        AppointmentSummary result = appointmentQueryService.findById(appointmentId);
 
         assertNotNull(result);
         assertEquals(appointmentId, result.getId());
@@ -77,7 +97,7 @@ class AppointmentQueryServiceImplTest {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 10), 1);
         when(appointmentRepository.findByClientId(clientId, PageRequest.of(0, 10))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findByClientId(clientId, PageRequest.of(0, 10));
+        PageResponse<AppointmentSummary> result = appointmentQueryService.findByClientId(clientId, PageRequest.of(0, 10));
 
         assertEquals(1, result.getContent().size());
         assertEquals(1, result.getTotalElements());
@@ -89,7 +109,7 @@ class AppointmentQueryServiceImplTest {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 10), 1);
         when(appointmentRepository.findByPetId(petId, PageRequest.of(0, 10))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findByPetId(petId, PageRequest.of(0, 10));
+        PageResponse<AppointmentSummary> result = appointmentQueryService.findByPetId(petId, PageRequest.of(0, 10));
 
         assertEquals(1, result.getContent().size());
         assertEquals(1, result.getTotalElements());
@@ -100,7 +120,7 @@ class AppointmentQueryServiceImplTest {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 10), 1);
         when(appointmentRepository.findByVeterinarianId(vetId, PageRequest.of(0, 10))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findByVeterinarianId(vetId, PageRequest.of(0, 10));
+        PageResponse<AppointmentSummary> result = appointmentQueryService.findByVeterinarianId(vetId, PageRequest.of(0, 10));
 
         assertEquals(1, result.getContent().size());
         assertEquals(1, result.getTotalElements());
@@ -112,7 +132,7 @@ class AppointmentQueryServiceImplTest {
         when(appointmentRepository.findByDateRange(LocalDate.of(2026, 7, 1),
                 LocalDate.of(2026, 7, 31), PageRequest.of(0, 10))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findByDateRange(
+        PageResponse<AppointmentSummary> result = appointmentQueryService.findByDateRange(
                 LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 31), PageRequest.of(0, 10));
 
         assertEquals(1, result.getContent().size());
@@ -124,7 +144,7 @@ class AppointmentQueryServiceImplTest {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 20), 1);
         when(appointmentRepository.findAll(PageRequest.of(0, 20))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findAll(PageRequest.of(0, 20));
+        PageResponse<AppointmentSummary> result = appointmentQueryService.findAll(PageRequest.of(0, 20));
 
         assertEquals(1, result.getContent().size());
         verify(appointmentRepository).findAll(PageRequest.of(0, 20));
@@ -137,7 +157,7 @@ class AppointmentQueryServiceImplTest {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 10), 1);
         when(appointmentRepository.findByVeterinarianIdAndClientId(vetId, clientId, PageRequest.of(0, 10))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findByVeterinarianIdAndClientId(vetId, clientId, PageRequest.of(0, 10));
+        PageResponse<AppointmentSummary> result = appointmentQueryService.findByVeterinarianIdAndClientId(vetId, clientId, PageRequest.of(0, 10));
 
         assertEquals(1, result.getContent().size());
         verify(appointmentRepository).findByVeterinarianIdAndClientId(vetId, clientId, PageRequest.of(0, 10));
@@ -148,7 +168,7 @@ class AppointmentQueryServiceImplTest {
         Page<Appointment> page = new PageImpl<>(List.of(testAppointment), PageRequest.of(0, 10), 1);
         when(appointmentRepository.findByVeterinarianIdAndPetId(vetId, petId, PageRequest.of(0, 10))).thenReturn(page);
 
-        PageResponse<Appointment> result = appointmentQueryService.findByVeterinarianIdAndPetId(vetId, petId, PageRequest.of(0, 10));
+        PageResponse<AppointmentSummary> result = appointmentQueryService.findByVeterinarianIdAndPetId(vetId, petId, PageRequest.of(0, 10));
 
         assertEquals(1, result.getContent().size());
         verify(appointmentRepository).findByVeterinarianIdAndPetId(vetId, petId, PageRequest.of(0, 10));

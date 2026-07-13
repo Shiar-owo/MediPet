@@ -180,7 +180,7 @@ Change the password on first login. The `POST /api/auth/register` endpoint requi
 ### Required Environment Variables
 
 ```bash
-# Database
+# Database (for prod, Render provides DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD automatically)
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/medipet
 SPRING_DATASOURCE_USERNAME=medipet
 SPRING_DATASOURCE_PASSWORD=medipet
@@ -190,10 +190,23 @@ JWT_SECRET=your-secret-key
 JWT_ACCESS_EXPIRATION=3600000    # 1 hour
 JWT_REFRESH_EXPIRATION=604800000 # 7 days
 
+# CORS (comma-separated origins, defaults to localhost for dev)
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+
 # Cloudinary (for photo upload)
 CLOUDINARY_CLOUD_NAME=your-cloud
 CLOUDINARY_API_KEY=your-key
 CLOUDINARY_API_SECRET=your-secret
+```
+
+**Render-specific:**
+
+```bash
+# Profile (activates application-prod.yaml which reads DB_* vars)
+SPRING_PROFILES_ACTIVE=prod
+
+# CORS (set to your Vercel URL)
+CORS_ALLOWED_ORIGINS=https://your-app.vercel.app
 ```
 
 ---

@@ -1,5 +1,10 @@
 # MediPet
 
+[![CI](https://github.com/Shiar-owo/MediPet/actions/workflows/ci.yml/badge.svg)](https://github.com/Shiar-owo/MediPet/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Shiar-owo_MediPet&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Shiar-owo_MediPet)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Shiar-owo_MediPet&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Shiar-owo_MediPet)
+[![GHCR](https://img.shields.io/badge/ghcr.io-medipet-2496ED?logo=docker&logoColor=white)](https://github.com/Shiar-owo/MediPet/pkgs/container/medipet)
+
 Veterinary Clinic Management System — a modular monolith built with **hexagonal architecture** (ports & adapters), Spring Boot 4.0.7, PostgreSQL, and React.
 
 ---

@@ -1,0 +1,59 @@
+settings:
+  env:
+    BASE_URL: ${HOST}
+
+execution:
+  - scenario: smoke
+    concurrency: 10
+    ramp-up: 10s
+    hold-for: 60s
+
+scenarios:
+  smoke:
+    requests:
+      - label: health
+        url: ${BASE_URL}/actuator/health
+
+      - label: login
+        url: ${BASE_URL}/api/auth/login
+        method: POST
+        headers:
+          Content-Type: application/json
+        body:
+          email: ${JMETER_USER_EMAIL}
+          password: ${JMETER_USER_PASSWORD}
+        extract-jsonpath:
+          token: $.data.accessToken
+
+      - label: dashboard-stats
+        url: ${BASE_URL}/api/dashboard/stats
+        headers:
+          Authorization: Bearer ${token}
+
+      - label: clients-list
+        url: ${BASE_URL}/api/clients?page=0&size=20
+        headers:
+          Authorization: Bearer ${token}
+
+      - label: pets-list
+        url: ${BASE_URL}/api/pets?page=0&size=20
+        headers:
+          Authorization: Bearer ${token}
+
+      - label: appointments-list
+        url: ${BASE_URL}/api/appointments?page=0&size=20
+        headers:
+          Authorization: Bearer ${token}
+
+reporting:
+  - module: final-stats
+    summary: true
+    percentiles: true
+  - module: console
+  - module: junit-xml
+    filename: report/junit.xml
+  - module: passfail
+    criteria:
+      - avg-rt>2000ms, continue as failed
+      - p95>2500ms, continue as failed
+      - fail>1%, stop as failed

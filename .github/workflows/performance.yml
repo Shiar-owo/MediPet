@@ -1,0 +1,56 @@
+name: Performance (JMeter/Taurus)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Base URL a probar (vacío = variable RENDER_API_URL)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  jmeter:
+    name: Load test against Render
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve target URL
+        id: target
+        run: |
+          URL="${{ github.event.inputs.target_url }}"
+          if [ -z "$URL" ]; then URL="${{ vars.RENDER_API_URL }}"; fi
+          if [ -z "$URL" ]; then echo "No target URL provided" >&2; exit 1; fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Warm-up Render (cold start)
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.target.outputs.url }}/actuator/health" || true)
+            echo "attempt $i -> $code"
+            [ "$code" = "200" ] && break
+            sleep 10
+          done
+
+      - name: Run Taurus (JMeter)
+        env:
+          HOST: ${{ steps.target.outputs.url }}
+          JMETER_USER_EMAIL: ${{ secrets.JMETER_USER_EMAIL }}
+          JMETER_USER_PASSWORD: ${{ secrets.JMETER_USER_PASSWORD }}
+        run: |
+          mkdir -p performance/report
+          docker run --rm \
+            -v "$PWD/performance:/bzt-configs" \
+            -e HOST -e JMETER_USER_EMAIL -e JMETER_USER_PASSWORD \
+            blazemeter/taurus medipet.yml -o report
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-report
+          path: performance/report/
+          retention-days: 14

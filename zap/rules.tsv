@@ -1,0 +1,6 @@
+# ZAP alert rules for the MediPet API scan.
+# Format: <rule id>\t<IGNORE|WARN|FAIL>\t<comment>
+10015	IGNORE	Incomplete or No Cache-control Header Set
+10035	IGNORE	Strict-Transport-Security Header - handled by Render
+10096	IGNORE	Timestamp Disclosure - Unix
+10098	IGNORE	Cross-Domain Misconfiguration - CORS is intentional

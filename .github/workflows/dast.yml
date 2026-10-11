@@ -1,0 +1,56 @@
+name: DAST (OWASP ZAP API Scan)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Base URL (vacío = variable RENDER_API_URL)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  zap:
+    name: ZAP API Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve target URL
+        id: target
+        run: |
+          URL="${{ github.event.inputs.target_url }}"
+          if [ -z "$URL" ]; then URL="${{ vars.RENDER_API_URL }}"; fi
+          if [ -z "$URL" ]; then echo "No target URL provided" >&2; exit 1; fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Obtain JWT for authenticated scan
+        id: auth
+        env:
+          ZAP_USER_EMAIL: ${{ secrets.JMETER_USER_EMAIL }}
+          ZAP_USER_PASSWORD: ${{ secrets.JMETER_USER_PASSWORD }}
+        run: |
+          TOKEN=$(curl -sf -X POST "${{ steps.target.outputs.url }}/api/auth/login" \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$ZAP_USER_EMAIL\",\"password\":\"$ZAP_USER_PASSWORD\"}" \
+            | jq -r '.data.accessToken')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then echo "Login failed" >&2; exit 1; fi
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.10.0
+        env:
+          ZAP_AUTH_HEADER: Authorization
+          ZAP_AUTH_HEADER_VALUE: Bearer ${{ steps.auth.outputs.token }}
+          ZAP_AUTH_HEADER_SITE: ${{ steps.target.outputs.url }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          format: openapi
+          target: ${{ steps.target.outputs.url }}/v3/api-docs
+          rules_file_name: 'zap/rules.tsv'
+          cmd_options: '-a'
+          allow_issue_writing: false

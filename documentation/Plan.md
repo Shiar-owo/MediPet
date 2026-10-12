@@ -17,7 +17,7 @@ MediPet is a Veterinary Clinic Management System — a **modular monolith** buil
 | Appointment | Complete | 68 passing | ✅ |
 | Clinical | Complete | 16 passing | ✅ |
 | Dashboard | Complete | 7 passing | ✅ |
-| CI/CD (Sonar, OWASP, JMeter, GHCR) | Complete | — | ✅ |
+| CI/CD (Sonar, OWASP SCA/DAST, JMeter, GHCR) | Complete | — | ✅ |
 | Frontend (React) | Not started | — | 🔲 |
 | Deploy | Not started | — | 🔲 |
 

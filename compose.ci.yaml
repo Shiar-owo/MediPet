@@ -1,0 +1,5 @@
+services:
+  app:
+    environment:
+      MEDIPET_ADMIN_EMAIL: ${MEDIPET_ADMIN_EMAIL}
+      MEDIPET_ADMIN_PASSWORD: ${MEDIPET_ADMIN_PASSWORD}

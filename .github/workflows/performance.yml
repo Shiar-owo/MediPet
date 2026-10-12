@@ -52,7 +52,7 @@ jobs:
           docker run --rm --network medipet_default \
             -v "$PWD/performance:/bzt-configs" \
             -e HOST -e JMETER_USER_EMAIL -e JMETER_USER_PASSWORD \
-            blazemeter/taurus medipet-smoke.yml -o report
+            blazemeter/taurus medipet-smoke.yml -o settings.artifacts-dir=report
 
       - name: Upload report
         if: always()

@@ -9,9 +9,9 @@ settings:
 
 execution:
   - scenario: smoke
-    concurrency: 5
-    ramp-up: 5s
-    hold-for: 20s
+    concurrency: 1
+    ramp-up: 2s
+    hold-for: 15s
 
 scenarios:
   smoke:

@@ -88,7 +88,7 @@ class UserPersistenceAdapterTest {
         Page<User> page = userRepository.findAll(PageRequest.of(0, 3));
 
         assertEquals(3, page.getContent().size());
-        assertEquals(6, page.getTotalElements());
+        assertEquals(5, page.getTotalElements());
         assertEquals(2, page.getTotalPages());
     }
 

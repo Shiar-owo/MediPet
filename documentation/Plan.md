@@ -244,7 +244,7 @@ All endpoints return a unified `ApiResponse<T>` wrapper:
 |---------|------|-------------|
 | V1 | `V1__create_users_table.sql` | Users table |
 | V2 | `V2__create_refresh_tokens_table.sql` | Refresh tokens |
-| V3 | `V3__seed_admin.sql` | Default admin user |
+| V3 | `V3__seed_admin.sql` | No-op (initial admin bootstrapped from env) |
 | V4 | `V4__create_clients_table.sql` | Clients table |
 | V5 | `V5__create_pets_table.sql` | Pets table |
 | V6 | `V6__create_appointments_table.sql` | Appointments (Day 1) |

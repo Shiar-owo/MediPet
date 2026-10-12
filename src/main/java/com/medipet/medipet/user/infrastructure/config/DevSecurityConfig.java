@@ -29,6 +29,7 @@ class DevSecurityConfig {
                                     CorsConfigurationSource corsConfigurationSource) {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
+            // Stateless JWT API (Bearer token, no cookies/sessions): CSRF protection is not applicable.
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth

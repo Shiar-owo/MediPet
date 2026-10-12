@@ -167,20 +167,29 @@ docker compose up -d postgres
 
 ### Default Admin User
 
-Seeded via Flyway migration (`V3__seed_admin.sql`):
+No default credentials are stored in the repository. The initial admin is created
+at startup by `AdminBootstrap` (an `ApplicationRunner`) from environment variables,
+only when they are set **and** the account does not already exist:
 
-- **Email:** `admin@medipet.com`
-- **Password:** `admin123`
+```bash
+MEDIPET_ADMIN_EMAIL=admin@medipet.com
+MEDIPET_ADMIN_PASSWORD=<a-strong-password>
+```
 
-Change the password on first login. The `POST /api/auth/register` endpoint requires `ADMIN` role.
+The runner executes once, after Flyway migrations have run. If the variables are
+not set, no admin is created (and a warning is logged). Once the admin exists you
+can remove these variables from the environment. Creating additional users still
+requires the `ADMIN` role via `POST /api/auth/register`.
 
-**Why Flyway seed instead of @PostConstruct or public registration?**
+**Why bootstrap at startup instead of a Flyway seed?**
 
-- **No public registration**: The only way to create users is `POST /api/auth/register` which requires ADMIN role. This prevents unauthorized user creation.
-- **Bootstrap problem**: You need at least one ADMIN user to create others via the API. The V3 seed solves this chicken-and-egg problem.
-- **Reproducibility**: Every environment (local, CI, staging, production) gets the same admin user on first migration run. No manual setup needed.
-- **No runtime overhead**: Unlike `@PostConstruct` which runs on every app startup checking if the admin exists, Flyway runs the seed exactly once at database creation time.
-- **Database-first**: The admin user is part of the database schema, not application code. This follows the infrastructure-as-data principle and keeps application code stateless.
+- **No secrets in source control**: A seeded admin would embed a password hash in a
+  migration file, which is committed to the repository.
+- **Bootstrap problem**: The `POST /api/auth/register` endpoint requires an existing
+  `ADMIN`, so at least one admin must be created out-of-band. `AdminBootstrap` fills
+  that gap using credentials supplied by the environment.
+- **Idempotent & environment-agnostic**: The same mechanism works for local, CI and
+  production; it simply does nothing when the variables are absent or the user exists.
 
 ### Required Environment Variables
 
@@ -194,6 +203,10 @@ SPRING_DATASOURCE_PASSWORD=medipet
 JWT_SECRET=your-secret-key
 JWT_ACCESS_EXPIRATION=3600000    # 1 hour
 JWT_REFRESH_EXPIRATION=604800000 # 7 days
+
+# Initial admin bootstrap (optional; only needed to create the first admin)
+MEDIPET_ADMIN_EMAIL=admin@medipet.com
+MEDIPET_ADMIN_PASSWORD=a-strong-password
 
 # CORS (comma-separated origins, defaults to localhost for dev)
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000

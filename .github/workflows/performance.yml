@@ -1,12 +1,18 @@
 name: Performance (JMeter/Taurus)
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       target_url:
         description: 'Base URL a probar (vacío = variable RENDER_API_URL)'
         required: false
         default: ''
+
+concurrency:
+  group: performance-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

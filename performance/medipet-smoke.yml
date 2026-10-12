@@ -4,6 +4,8 @@
 settings:
   env:
     BASE_URL: ${HOST}
+    EMAIL: ${JMETER_USER_EMAIL}
+    PASSWORD: ${JMETER_USER_PASSWORD}
 
 execution:
   - scenario: smoke
@@ -23,8 +25,8 @@ scenarios:
         headers:
           Content-Type: application/json
         body:
-          email: ${JMETER_USER_EMAIL}
-          password: ${JMETER_USER_PASSWORD}
+          email: ${EMAIL}
+          password: ${PASSWORD}
         extract-jsonpath:
           token: $.data.accessToken
 

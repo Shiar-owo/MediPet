@@ -27,11 +27,11 @@ scenarios:
         body:
           email: ${EMAIL}
           password: ${PASSWORD}
-        extractors:
-          - type: json
-            property: token
+        extract-jsonpath:
+          token:
             jsonpath: $.data.accessToken
             match-no: 1
+            default: NOT_FOUND
 
       - label: dashboard-stats
         url: ${BASE_URL}/api/dashboard/stats

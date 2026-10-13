@@ -1,5 +1,5 @@
 # -- Build stage --
-FROM eclipse-temurin:17-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 
 # 1. Copy the wrapper tools first (these change very rarely)
@@ -19,7 +19,7 @@ COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 ./mvnw clean package -DskipTests -B
 
 # -- Runtime stage --
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 
 # Keep your runtime layer clean and minimal

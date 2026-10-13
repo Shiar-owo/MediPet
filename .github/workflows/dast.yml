@@ -1,0 +1,86 @@
+name: DAST (OWASP ZAP API Scan)
+
+on:
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: dast-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dast:
+    name: DAST (ephemeral)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      COMPOSE_PROJECT_NAME: medipet
+      MEDIPET_ADMIN_EMAIL: admin@medipet.test
+      MEDIPET_ADMIN_PASSWORD: Admin12345!
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Start ephemeral stack
+        run: |
+          touch .env
+          docker compose -f compose.yaml -f compose.ci.yaml up -d --build
+
+      - name: Wait for API health
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || true)
+            echo "attempt $i -> $code"
+            [ "$code" = "200" ] && break
+            sleep 5
+          done
+          if [ "$code" != "200" ]; then
+            echo "API did not become healthy" >&2
+            docker compose -f compose.yaml -f compose.ci.yaml logs app
+            exit 1
+          fi
+
+      - name: Resolve host gateway
+        id: gw
+        run: echo "ip=$(docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}')" >> "$GITHUB_OUTPUT"
+
+      - name: Obtain JWT for authenticated scan
+        id: auth
+        run: |
+          TOKEN=$(curl -sf -X POST http://localhost:8080/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d "{\"email\":\"$MEDIPET_ADMIN_EMAIL\",\"password\":\"$MEDIPET_ADMIN_PASSWORD\"}" \
+            | jq -r '.data.accessToken')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then echo "Login failed" >&2; exit 1; fi
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: ZAP API Scan
+        uses: zaproxy/action-api-scan@5158fe4d9d8fcc75ea204db81317cce7f9e5453d # v0.10.0
+        env:
+          ZAP_AUTH_HEADER: Authorization
+          ZAP_AUTH_HEADER_VALUE: Bearer ${{ steps.auth.outputs.token }}
+          ZAP_AUTH_HEADER_SITE: http://${{ steps.gw.outputs.ip }}:8080
+        with:
+          format: openapi
+          target: http://${{ steps.gw.outputs.ip }}:8080/v3/api-docs
+          rules_file_name: 'zap/rules.tsv'
+          cmd_options: '-a -I'
+          allow_issue_writing: false
+
+      - name: Enforce DAST gate (no Medium/High alerts)
+        if: always()
+        run: |
+          REPORT=report_json.json
+          if [ ! -f "$REPORT" ]; then echo "ZAP report not found" >&2; exit 1; fi
+          count=$(jq '[.site[].alerts[] | select((.riskcode|tonumber) >= 2)] | length' "$REPORT")
+          echo "Medium/High alerts: $count"
+          jq -r '.site[].alerts[] | select((.riskcode|tonumber) >= 2) | "risk=\(.riskcode) \(.name) -> \(.url)"' "$REPORT" || true
+          if [ "$count" -ne 0 ]; then echo "DAST gate failed: $count Medium/High alert(s)" >&2; exit 1; fi
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f compose.yaml -f compose.ci.yaml down -v

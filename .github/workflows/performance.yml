@@ -1,0 +1,68 @@
+name: Performance (JMeter/Taurus)
+
+on:
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: performance-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  performance:
+    name: Performance (smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      COMPOSE_PROJECT_NAME: medipet
+      MEDIPET_ADMIN_EMAIL: admin@medipet.test
+      MEDIPET_ADMIN_PASSWORD: Admin12345!
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Start ephemeral stack
+        run: |
+          touch .env
+          docker compose -f compose.yaml -f compose.ci.yaml up -d --build
+
+      - name: Wait for API health
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || true)
+            echo "attempt $i -> $code"
+            [ "$code" = "200" ] && break
+            sleep 5
+          done
+          if [ "$code" != "200" ]; then
+            echo "API did not become healthy" >&2
+            docker compose -f compose.yaml -f compose.ci.yaml logs app
+            exit 1
+          fi
+
+      - name: Run Taurus smoke (JMeter)
+        env:
+          HOST: http://app:8080
+          JMETER_USER_EMAIL: admin@medipet.test
+          JMETER_USER_PASSWORD: Admin12345!
+        run: |
+          mkdir -p performance/report
+          docker run --rm --network medipet_default \
+            -v "$PWD/performance:/bzt-configs" \
+            -e HOST -e JMETER_USER_EMAIL -e JMETER_USER_PASSWORD \
+            blazemeter/taurus:1.17.1 medipet-smoke.yml -o settings.artifacts-dir=report
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: jmeter-report
+          path: performance/report/
+          retention-days: 14
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f compose.yaml -f compose.ci.yaml down -v

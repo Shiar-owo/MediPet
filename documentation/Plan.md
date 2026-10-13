@@ -13,9 +13,11 @@ MediPet is a Veterinary Clinic Management System — a **modular monolith** buil
 | Shared infrastructure | Complete | — | ✅ |
 | User/Auth | Complete | 56 passing | ✅ |
 | Client | Complete | 31 passing | ✅ |
-| Pet | Complete | 38 passing | ✅ |
-| Appointment | Pending | — | 🔲 |
-| Clinical | Pending | — | 🔲 |
+| Pet (+ photo upload) | Complete | 42 passing | ✅ |
+| Appointment | Complete | 68 passing | ✅ |
+| Clinical | Complete | 16 passing | ✅ |
+| Dashboard | Complete | 7 passing | ✅ |
+| CI/CD (Sonar, OWASP SCA/DAST, JMeter, GHCR) | Complete | — | ✅ |
 | Frontend (React) | Not started | — | 🔲 |
 | Deploy | Not started | — | 🔲 |
 
@@ -242,7 +244,7 @@ All endpoints return a unified `ApiResponse<T>` wrapper:
 |---------|------|-------------|
 | V1 | `V1__create_users_table.sql` | Users table |
 | V2 | `V2__create_refresh_tokens_table.sql` | Refresh tokens |
-| V3 | `V3__seed_admin.sql` | Default admin user |
+| V3 | `V3__seed_admin.sql` | No-op (initial admin bootstrapped from env) |
 | V4 | `V4__create_clients_table.sql` | Clients table |
 | V5 | `V5__create_pets_table.sql` | Pets table |
 | V6 | `V6__create_appointments_table.sql` | Appointments (Day 1) |

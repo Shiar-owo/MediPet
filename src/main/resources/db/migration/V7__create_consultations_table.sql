@@ -13,8 +13,8 @@ CREATE TABLE consultations (
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    created_by VARCHAR,
-    updated_by VARCHAR
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255)
 );
 
 CREATE INDEX idx_consultations_pet_id ON consultations(pet_id);

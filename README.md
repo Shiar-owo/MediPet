@@ -1,5 +1,10 @@
 # MediPet
 
+[![CI](https://github.com/Shiar-owo/MediPet/actions/workflows/ci.yml/badge.svg)](https://github.com/Shiar-owo/MediPet/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Shiar-owo_MediPet&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Shiar-owo_MediPet)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Shiar-owo_MediPet&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Shiar-owo_MediPet)
+[![GHCR](https://img.shields.io/badge/ghcr.io-medipet-2496ED?logo=docker&logoColor=white)](https://github.com/Shiar-owo/MediPet/pkgs/container/medipet)
+
 Veterinary Clinic Management System — a modular monolith built with **hexagonal architecture** (ports & adapters), Spring Boot 4.0.7, PostgreSQL, and React.
 
 ---
@@ -162,20 +167,29 @@ docker compose up -d postgres
 
 ### Default Admin User
 
-Seeded via Flyway migration (`V3__seed_admin.sql`):
+No default credentials are stored in the repository. The initial admin is created
+at startup by `AdminBootstrap` (an `ApplicationRunner`) from environment variables,
+only when they are set **and** the account does not already exist:
 
-- **Email:** `admin@medipet.com`
-- **Password:** `admin123`
+```bash
+MEDIPET_ADMIN_EMAIL=admin@medipet.com
+MEDIPET_ADMIN_PASSWORD=<a-strong-password>
+```
 
-Change the password on first login. The `POST /api/auth/register` endpoint requires `ADMIN` role.
+The runner executes once, after Flyway migrations have run. If the variables are
+not set, no admin is created (and a warning is logged). Once the admin exists you
+can remove these variables from the environment. Creating additional users still
+requires the `ADMIN` role via `POST /api/auth/register`.
 
-**Why Flyway seed instead of @PostConstruct or public registration?**
+**Why bootstrap at startup instead of a Flyway seed?**
 
-- **No public registration**: The only way to create users is `POST /api/auth/register` which requires ADMIN role. This prevents unauthorized user creation.
-- **Bootstrap problem**: You need at least one ADMIN user to create others via the API. The V3 seed solves this chicken-and-egg problem.
-- **Reproducibility**: Every environment (local, CI, staging, production) gets the same admin user on first migration run. No manual setup needed.
-- **No runtime overhead**: Unlike `@PostConstruct` which runs on every app startup checking if the admin exists, Flyway runs the seed exactly once at database creation time.
-- **Database-first**: The admin user is part of the database schema, not application code. This follows the infrastructure-as-data principle and keeps application code stateless.
+- **No secrets in source control**: A seeded admin would embed a password hash in a
+  migration file, which is committed to the repository.
+- **Bootstrap problem**: The `POST /api/auth/register` endpoint requires an existing
+  `ADMIN`, so at least one admin must be created out-of-band. `AdminBootstrap` fills
+  that gap using credentials supplied by the environment.
+- **Idempotent & environment-agnostic**: The same mechanism works for local, CI and
+  production; it simply does nothing when the variables are absent or the user exists.
 
 ### Required Environment Variables
 
@@ -189,6 +203,10 @@ SPRING_DATASOURCE_PASSWORD=medipet
 JWT_SECRET=your-secret-key
 JWT_ACCESS_EXPIRATION=3600000    # 1 hour
 JWT_REFRESH_EXPIRATION=604800000 # 7 days
+
+# Initial admin bootstrap (optional; only needed to create the first admin)
+MEDIPET_ADMIN_EMAIL=admin@medipet.com
+MEDIPET_ADMIN_PASSWORD=a-strong-password
 
 # CORS (comma-separated origins, defaults to localhost for dev)
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
@@ -352,6 +370,10 @@ React SPA served as a static site. API base URL configured via `VITE_API_URL` en
 
 ### CI/CD (GitHub Actions)
 
-- Testcontainers-native pipeline (no external Postgres service needed)
-- Includes Docker build verification step
-- Runs on every push and PR to `main`
+- **CI** (`ci.yml`): build + tests + JaCoCo coverage + SonarCloud + OWASP Dependency-Check (SCA). Runs on PRs to `dev`/`main` and on push to `main`; the GHCR image is built/pushed only on `main`.
+- **DAST** (`dast.yml`): on every PR it boots an **ephemeral** stack (`compose.yaml` + `compose.ci.yaml` → app + Postgres) and runs an OWASP ZAP API scan against `/v3/api-docs`. Gate: **no Medium/High alerts**.
+- **Performance** (`performance.yml`): on every PR it runs a low-concurrency Taurus/JMeter smoke against the same ephemeral stack. Gate: **error rate ≤ 1%**.
+
+DAST and Performance run **fully ephemeral inside the GitHub runner** (no external environment). The ephemeral admin user is created by `AdminBootstrap` from CI environment variables.
+
+**Recommended branch protection** (Settings → Branches) on `dev` and `main`: require the checks **`DAST (ephemeral)`** and **`Performance (smoke)`** to pass before merging.

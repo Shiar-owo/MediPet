@@ -70,4 +70,21 @@ class JwtTokenProviderTest {
         assertEquals("user1@example.com", tokenProvider.extractEmail(token1));
         assertEquals("user2@example.com", tokenProvider.extractEmail(token2));
     }
+
+    @Test
+    void shouldGenerateUniqueRefreshTokensForSameEmailInSameInstant() {
+        String token1 = tokenProvider.generateRefreshToken("user@example.com");
+        String token2 = tokenProvider.generateRefreshToken("user@example.com");
+
+        assertNotEquals(token1, token2);
+        assertEquals("user@example.com", tokenProvider.extractEmail(token2));
+    }
+
+    @Test
+    void shouldGenerateUniqueAccessTokensForSameEmailInSameInstant() {
+        String token1 = tokenProvider.generateAccessToken("user@example.com", "ADMIN");
+        String token2 = tokenProvider.generateAccessToken("user@example.com", "ADMIN");
+
+        assertNotEquals(token1, token2);
+    }
 }

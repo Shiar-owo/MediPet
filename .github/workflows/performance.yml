@@ -16,6 +16,7 @@ jobs:
   performance:
     name: Performance (smoke)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       COMPOSE_PROJECT_NAME: medipet
       MEDIPET_ADMIN_EMAIL: admin@medipet.test
@@ -49,10 +50,11 @@ jobs:
           JMETER_USER_PASSWORD: Admin12345!
         run: |
           mkdir -p performance/report
+          chmod -R a+w performance
           docker run --rm --network medipet_default \
             -v "$PWD/performance:/bzt-configs" \
             -e HOST -e JMETER_USER_EMAIL -e JMETER_USER_PASSWORD \
-            blazemeter/taurus medipet-smoke.yml -o settings.artifacts-dir=report
+            blazemeter/taurus:1.17.1 medipet-smoke.yml -o settings.artifacts-dir=report
 
       - name: Upload report
         if: always()

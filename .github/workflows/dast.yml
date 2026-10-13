@@ -16,6 +16,7 @@ jobs:
   dast:
     name: DAST (ephemeral)
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     env:
       COMPOSE_PROJECT_NAME: medipet
       MEDIPET_ADMIN_EMAIL: admin@medipet.test

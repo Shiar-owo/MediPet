@@ -22,7 +22,7 @@ jobs:
       MEDIPET_ADMIN_EMAIL: admin@medipet.test
       MEDIPET_ADMIN_PASSWORD: Admin12345!
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Start ephemeral stack
         run: |
@@ -59,7 +59,7 @@ jobs:
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: ZAP API Scan
-        uses: zaproxy/action-api-scan@v0.10.0
+        uses: zaproxy/action-api-scan@5158fe4d9d8fcc75ea204db81317cce7f9e5453d # v0.10.0
         env:
           ZAP_AUTH_HEADER: Authorization
           ZAP_AUTH_HEADER_VALUE: Bearer ${{ steps.auth.outputs.token }}

@@ -370,6 +370,10 @@ React SPA served as a static site. API base URL configured via `VITE_API_URL` en
 
 ### CI/CD (GitHub Actions)
 
-- Testcontainers-native pipeline (no external Postgres service needed)
-- Includes Docker build verification step
-- Runs on every push and PR to `main`
+- **CI** (`ci.yml`): build + tests + JaCoCo coverage + SonarCloud + OWASP Dependency-Check (SCA). Runs on PRs to `dev`/`main` and on push to `main`; the GHCR image is built/pushed only on `main`.
+- **DAST** (`dast.yml`): on every PR it boots an **ephemeral** stack (`compose.yaml` + `compose.ci.yaml` → app + Postgres) and runs an OWASP ZAP API scan against `/v3/api-docs`. Gate: **no Medium/High alerts**.
+- **Performance** (`performance.yml`): on every PR it runs a low-concurrency Taurus/JMeter smoke against the same ephemeral stack. Gate: **error rate ≤ 1%**.
+
+DAST and Performance run **fully ephemeral inside the GitHub runner** (no external environment). The ephemeral admin user is created by `AdminBootstrap` from CI environment variables.
+
+**Recommended branch protection** (Settings → Branches) on `dev` and `main`: require the checks **`DAST (ephemeral)`** and **`Performance (smoke)`** to pass before merging.

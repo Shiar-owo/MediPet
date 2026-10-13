@@ -1,0 +1,65 @@
+# Smoke load profile for CI (ephemeral stack in the GitHub runner).
+# Low concurrency on purpose: shared runners are noisy, so this only guards
+# against functional regressions under concurrency, not latency SLAs.
+settings:
+  env:
+    BASE_URL: ${HOST}
+    EMAIL: ${JMETER_USER_EMAIL}
+    PASSWORD: ${JMETER_USER_PASSWORD}
+
+execution:
+  - scenario: smoke
+    concurrency: 1
+    iterations: 1
+    ramp-up: 1s
+
+scenarios:
+  smoke:
+    requests:
+      - label: health
+        url: ${BASE_URL}/actuator/health
+
+      - label: login
+        url: ${BASE_URL}/api/auth/login
+        method: POST
+        headers:
+          Content-Type: application/json
+        body:
+          email: ${EMAIL}
+          password: ${PASSWORD}
+        extract-jsonpath:
+          token:
+            jsonpath: $.data.accessToken
+            match-no: 1
+            default: NOT_FOUND
+
+      - label: dashboard-stats
+        url: ${BASE_URL}/api/dashboard/stats
+        headers:
+          Authorization: Bearer ${token}
+
+      - label: clients-list
+        url: ${BASE_URL}/api/clients?page=0&size=20
+        headers:
+          Authorization: Bearer ${token}
+
+      - label: pets-list
+        url: ${BASE_URL}/api/pets?page=0&size=20
+        headers:
+          Authorization: Bearer ${token}
+
+      - label: appointments-list
+        url: ${BASE_URL}/api/appointments?page=0&size=20
+        headers:
+          Authorization: Bearer ${token}
+
+reporting:
+  - module: final-stats
+    summary: true
+    percentiles: true
+  - module: console
+  - module: junit-xml
+    filename: report/junit.xml
+  - module: passfail
+    criteria:
+      - fail>1%, stop as failed

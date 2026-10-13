@@ -35,3 +35,8 @@ build/
 ### Environment ###
 .env
 *.env
+
+### Performance (Taurus/JMeter) ###
+kpi.jtl
+performance/report/
+performance/jmeter.log

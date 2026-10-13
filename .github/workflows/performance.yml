@@ -50,7 +50,6 @@ jobs:
           JMETER_USER_PASSWORD: Admin12345!
         run: |
           mkdir -p performance/report
-          chmod -R a+w performance
           docker run --rm --network medipet_default \
             -v "$PWD/performance:/bzt-configs" \
             -e HOST -e JMETER_USER_EMAIL -e JMETER_USER_PASSWORD \

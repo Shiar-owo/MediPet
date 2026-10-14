@@ -1,5 +1,7 @@
 services:
   app:
     environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydatabase
       MEDIPET_ADMIN_EMAIL: ${MEDIPET_ADMIN_EMAIL}
       MEDIPET_ADMIN_PASSWORD: ${MEDIPET_ADMIN_PASSWORD}

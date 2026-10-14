@@ -276,7 +276,12 @@
                         <format>JSON</format>
                     </formats>
                     <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
-                    <nvdValidForHours>24</nvdValidForHours>
+                    <nvdValidForHours>168</nvdValidForHours>
+                    <nvdApiDelay>3000</nvdApiDelay>
+                    <ossIndexAnalyzerEnabled>false</ossIndexAnalyzerEnabled>
+                    <nodeAnalyzerEnabled>false</nodeAnalyzerEnabled>
+                    <nodeAuditAnalyzerEnabled>false</nodeAuditAnalyzerEnabled>
+                    <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
                 </configuration>
             </plugin>
         </plugins>

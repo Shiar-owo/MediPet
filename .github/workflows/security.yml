@@ -16,16 +16,13 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  NVD_DATA_DIR: ${{ github.workspace }}/.dc-data
-
 jobs:
   # Weekly / on-demand: refresh the NVD database and seed the shared cache.
   update-nvd:
     name: Update NVD database
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -44,7 +41,7 @@ jobs:
         id: nvd-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ${{ env.NVD_DATA_DIR }}
+          path: ${{ github.workspace }}/.dc-data
           key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
           restore-keys: |
             ${{ runner.os }}-nvd-
@@ -63,14 +60,14 @@ jobs:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: >
           ./mvnw -B org.owasp:dependency-check-maven:update-only
-          -DdataDirectory=$NVD_DATA_DIR
+          -DdataDirectory=${{ github.workspace }}/.dc-data
 
       - name: Save NVD data
-        if: always() && steps.nvd-cache.outputs.cache-hit != 'true'
+        if: always() && steps.nvd-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
         continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ${{ env.NVD_DATA_DIR }}
+          path: ${{ github.workspace }}/.dc-data
           key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
 
   # Runs on every PR / push: restore the seeded DB and analyze (fast).
@@ -97,7 +94,7 @@ jobs:
         id: nvd-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ${{ env.NVD_DATA_DIR }}
+          path: ${{ github.workspace }}/.dc-data
           key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
           restore-keys: |
             ${{ runner.os }}-nvd-
@@ -116,7 +113,7 @@ jobs:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: >
           ./mvnw -B org.owasp:dependency-check-maven:check
-          -DdataDirectory=$NVD_DATA_DIR
+          -DdataDirectory=${{ github.workspace }}/.dc-data
           -DautoUpdate=${{ steps.nvd-cache.outputs.cache-hit != 'true' }}
 
       - name: Upload Dependency-Check report

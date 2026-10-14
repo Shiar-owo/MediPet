@@ -23,9 +23,8 @@ services:
       - '8080:8080'
     env_file:
       - .env
-    environment:
-      - 'SPRING_PROFILES_ACTIVE=dev'
-      - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mydatabase'
+  #  environment:
+    #  - 'SPRING_PROFILES_ACTIVE=dev'
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:8080/actuator/health || exit 1']
       interval: 10s

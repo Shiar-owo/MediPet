@@ -1,0 +1,133 @@
+name: Security (OWASP Dependency-Check)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [dev, main]
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Weekly / on-demand: refresh the NVD database and seed the shared cache.
+  update-nvd:
+    name: Update NVD database
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compute weekly NVD cache key
+        id: week
+        run: echo "week=$(date +%Y-%U)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore NVD data
+        id: nvd-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ github.workspace }}/.dc-data
+          key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
+          restore-keys: |
+            ${{ runner.os }}-nvd-
+
+      - name: Require NVD_API_KEY
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "NVD_API_KEY secret is required for Dependency-Check" >&2
+            exit 1
+          fi
+
+      - name: Update NVD database
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: >
+          ./mvnw -B org.owasp:dependency-check-maven:update-only
+          -DdataDirectory=${{ github.workspace }}/.dc-data
+
+      - name: Save NVD data
+        if: always() && steps.nvd-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ github.workspace }}/.dc-data
+          key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
+
+  # Runs on every PR / push: restore the seeded DB and analyze (fast).
+  owasp-sca:
+    name: OWASP Dependency-Check (SCA)
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compute weekly NVD cache key
+        id: week
+        run: echo "week=$(date +%Y-%U)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore NVD data
+        id: nvd-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ github.workspace }}/.dc-data
+          key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
+          restore-keys: |
+            ${{ runner.os }}-nvd-
+
+      - name: Require NVD_API_KEY
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "NVD_API_KEY secret is required for Dependency-Check" >&2
+            exit 1
+          fi
+
+      - name: Run Dependency-Check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: >
+          ./mvnw -B org.owasp:dependency-check-maven:check
+          -DdataDirectory=${{ github.workspace }}/.dc-data
+          -DautoUpdate=${{ steps.nvd-cache.outputs.cache-hit != 'true' }}
+
+      - name: Save NVD data
+        if: always() && steps.nvd-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ github.workspace }}/.dc-data
+          key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
+
+      - name: Upload Dependency-Check report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dependency-check-report
+          path: target/dependency-check-report.*
+          retention-days: 7

@@ -75,7 +75,7 @@ jobs:
     name: OWASP Dependency-Check (SCA)
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -115,6 +115,14 @@ jobs:
           ./mvnw -B org.owasp:dependency-check-maven:check
           -DdataDirectory=${{ github.workspace }}/.dc-data
           -DautoUpdate=${{ steps.nvd-cache.outputs.cache-hit != 'true' }}
+
+      - name: Save NVD data
+        if: always() && steps.nvd-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ github.workspace }}/.dc-data
+          key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
 
       - name: Upload Dependency-Check report
         if: always()

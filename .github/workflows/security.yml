@@ -65,7 +65,7 @@ jobs:
       - name: Save NVD data
         if: always() && steps.nvd-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
         continue-on-error: true
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ github.workspace }}/.dc-data
           key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
@@ -119,7 +119,7 @@ jobs:
       - name: Save NVD data
         if: always() && steps.nvd-cache.outputs.cache-hit != 'true' && github.ref == 'refs/heads/main'
         continue-on-error: true
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ github.workspace }}/.dc-data
           key: ${{ runner.os }}-nvd-${{ steps.week.outputs.week }}
